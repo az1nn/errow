@@ -1,63 +1,65 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: Bootstrap SIGA protocol
-STATE: protocol persisted; PR #1 open at human merge gate
+WORKSTREAM: SPEC-001 — Playable MVP
+STATE: implementation complete in draft PR #2; Godot runtime/gameplay validation pending
 MODE: WATCH
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-001-PLAYABLE-MVP.md
 
-CURRENT VERSION / HEAD: resolve current tip of chore/siga-protocol during VERIFY-FIRST; last verified pre-handoff HEAD was 220cdda2334c360f40bea6b0623973bd3fa444f1
-BASE: master @ 4889b6a56c2dd9ba38ebb9c86e673b6cdd256976
-BRANCH / ENV: chore/siga-protocol
-PR / MR / TASK: PR #1 — chore: add SIGA continuation protocol
-SPEC / ADR: SIGA HANDOFF v1
+CURRENT VERSION / HEAD: resolve live PR #2 HEAD during VERIFY-FIRST; pre-handoff implementation HEAD was 1fcf70450fef9ef543d369aacb29f6aaaf1ed169
+BASE: master @ fdee9639bf87eaffd1f2b7975e6a930786cc33f7
+BRANCH / ENV: feat/001-playable-mvp
+PR / MR / TASK: PR #2 — feat: playable Errow MVP — DRAFT
+SPEC / ADR: SPEC-001-PLAYABLE-MVP
 
 DONE:
-- Reconciled repository state directly from GitHub.
-- Verified default branch is master.
-- Verified master contained only README.md before this workstream.
-- Verified no pull requests existed before this workstream.
-- Created branch chore/siga-protocol.
-- Persisted .agents/skills/siga/SKILL.md.
-- Persisted .agents/skills/siga/HANDOFF.md.
-- Opened PR #1.
-- Verified PR #1 contains exactly two changed files for the repository-local SIGA protocol.
+- Reconciled repository state from GitHub before advancing.
+- Verified SIGA bootstrap PR #1 is merged into master.
+- Created feat/001-playable-mvp from the verified master HEAD.
+- Added project.godot with mobile/web-oriented viewport and compatibility renderer.
+- Added src/main.tscn and src/main.gd.
+- Implemented the 5x5 arrow escape rule: an arrow exits only when its ray to the board edge is clear.
+- Added blocked-tap feedback, remaining-arrow counter, successful-move counter, restart and level progression.
+- Added three starter levels: First Escape, Queue, Cross Traffic.
+- Added docs/SPEC-001-PLAYABLE-MVP.md.
+- Updated README.md and .gitignore.
+- Opened draft PR #2.
 
 VERIFY:
-- GitHub PR state read directly.
-- On pre-handoff HEAD 220cdda2334c360f40bea6b0623973bd3fa444f1:
-  - workflow runs: none;
-  - combined status checks: none.
-- No automated CI gate is configured on that verified HEAD.
-- Because this handoff update creates a new commit, next execution must resolve and verify the current branch tip rather than trusting the recorded pre-handoff SHA.
+- Repository file/scene wiring reviewed from the branch.
+- Deterministic path logic independently checked against all three level datasets.
+- Each starter level has at least one complete solve sequence under the implemented rule.
+- Stable Godot documentation confirms the StyleBoxFlat border/corner APIs used by the UI.
+- Godot executable is not available in the current execution environment; no runtime/editor/export green claim has been made.
+- Final PR HEAD/check state must be re-read after this handoff commit.
 
 GATES:
-- PR #1 merge is a human gate unless explicitly authorized.
-- No automated CI/check gate was present on the last verified pre-handoff HEAD.
+- Human runtime/gameplay gate: open project.godot in Godot 4 and verify startup, sizing, arrow glyphs, touch/click behavior and completion flow.
+- PR #2 remains draft until that runtime gate is satisfied.
+- Merge remains a human gate.
 
 BLOCKERS:
-- none.
+- No implementation blocker.
+- Runtime evidence is pending because the current execution environment has no Godot binary.
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
 - VERIFY-FIRST on every standalone `Siga`.
 - Exactly one of RESUME / WATCH / ADVANCE after reconciliation.
 - No parallel canonical SIGA state outside this repository.
-- Do not duplicate active work.
-- Do not declare green gates without same-HEAD evidence.
-- Treat a persisted HEAD as a hint; always resolve the live branch/PR HEAD first.
+- Do not declare runtime/export success without actual runtime evidence.
+- Do not merge a human-gated PR automatically.
 
 NEXT:
-- On the next standalone `Siga`, reconcile PR #1 first.
-- If PR #1 remains open with no failing/running checks, remain WATCH at the human merge gate.
-- If PR #1 is merged/closed and no other work is active, classify ADVANCE from the repository roadmap/state.
-- Do not merge automatically without explicit authorization.
+- Reconcile live PR #2 HEAD and checks first.
+- If the user supplies a Godot error, screenshot or failed behavior, classify RESUME and fix PR #2 in place.
+- If runtime/gameplay validation is approved and no automated gate is failing/running, move PR #2 from draft to ready for review and remain WATCH at the merge gate.
+- After PR #2 is merged, classify ADVANCE and select the next unit from SPEC-001 next steps.
 
 VERIFY-FIRST:
 1. Read this handoff from the repository.
-2. Inspect az1nn/errow default branch and open PRs.
-3. Inspect PR #1 and branch chore/siga-protocol if they still exist.
-4. Resolve the live PR/branch HEAD SHA.
-5. Inspect workflow runs/status checks for that exact SHA.
-6. Inspect review/merge gate state.
-7. Classify exactly RESUME, WATCH, or ADVANCE from the reconciled state.
+2. Inspect master HEAD and open PRs.
+3. Inspect PR #2 current draft/state and resolve its live HEAD SHA.
+4. Inspect workflow runs/status checks for that exact SHA.
+5. Inspect any new review comments or user-provided runtime evidence.
+6. Classify exactly RESUME, WATCH, or ADVANCE.
