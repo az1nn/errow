@@ -385,10 +385,10 @@ func _apply_arrow_style(button: Button) -> void:
 	normal.content_margin_top = 8
 	normal.content_margin_bottom = 8
 
-	var hover := normal.duplicate()
+	var hover := normal.duplicate() as StyleBoxFlat
 	hover.bg_color = Color("#dff9ee")
 
-	var pressed := normal.duplicate()
+	var pressed := normal.duplicate() as StyleBoxFlat
 	pressed.bg_color = Color("#bcebd7")
 
 	button.add_theme_stylebox_override("normal", normal)
@@ -408,10 +408,10 @@ func _apply_action_style(button: Button) -> void:
 	normal.set_border_width_all(2)
 	normal.set_corner_radius_all(16)
 
-	var hover := normal.duplicate()
+	var hover := normal.duplicate() as StyleBoxFlat
 	hover.bg_color = Color("#223044")
 
-	var pressed := normal.duplicate()
+	var pressed := normal.duplicate() as StyleBoxFlat
 	pressed.bg_color = Color("#101824")
 
 	button.add_theme_stylebox_override("normal", normal)
