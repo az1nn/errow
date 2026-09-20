@@ -1,0 +1,92 @@
+name: Godot CI/CD
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: godot-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+
+jobs:
+  build:
+    name: Validate and export Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Godot
+        uses: lihop/setup-godot@v3
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          export-templates: true
+          cache: true
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import and parse project
+        run: godot --headless --path . --editor --quit
+
+      - name: Run headless scene smoke tests
+        run: godot --headless --path . --script tests/smoke.gd
+
+      - name: Export Web release
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+          test -f build/web/index.html
+          test -f build/web/index.wasm
+          test -f build/web/index.pck
+
+      - name: Upload Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: errow-web-${{ github.sha }}
+          path: build/web
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web
+
+  deploy:
+    name: Deploy Web to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
