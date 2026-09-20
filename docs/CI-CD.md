@@ -6,26 +6,35 @@ Errow uses GitHub Actions as the reproducible Godot runtime for repository valid
 
 Pinned version: **Godot 4.7.2 stable**.
 
-The CI runner installs the engine and matching export templates instead of relying on a developer workstation.
+The runner downloads the official Godot Linux binary and matching export templates directly from the Godot GitHub release. CI does not depend on a developer workstation or a preinstalled engine.
+
+## Source identity
+
+For pull requests, the workflow checks out `github.event.pull_request.head.sha` explicitly and verifies that `git rev-parse HEAD` matches it before any runtime gate is accepted.
+
+For pushes to `master`, the validated source is the pushed commit SHA.
+
+This preserves same-HEAD evidence for the repository continuation protocol.
 
 ## Pull request pipeline
 
 Every pull request targeting `master` runs:
 
-1. Godot installation and version check.
-2. Headless editor import/parse.
-3. `tests/smoke.gd` against the real main scene.
-4. Release export with the `Web` export preset.
-5. Verification that the HTML, WASM and PCK outputs exist.
-6. Upload of the complete Web build as a GitHub Actions artifact.
+1. Exact source checkout.
+2. Official Godot 4.7.2 stable + export-template installation.
+3. Engine version check.
+4. Exact-SHA assertion.
+5. Headless editor import/parse.
+6. `tests/smoke.gd` against the real main scene.
+7. Release export with the `Web` preset.
+8. Verification that HTML, WASM and PCK outputs exist.
+9. Upload of the complete Web build as a GitHub Actions artifact.
 
-A PR should not be treated as runtime-green unless this workflow succeeds on the exact PR HEAD.
+A PR is runtime/export-green only when this workflow succeeds on its exact live HEAD.
 
 ## Delivery pipeline
 
-A push to `master` repeats the same validated build and then uploads it as the GitHub Pages artifact.
-
-The deploy job uses the `github-pages` environment and the official GitHub Pages deployment action.
+A push to `master` repeats the same validated build and uploads the Web output as the GitHub Pages artifact. The deploy job then publishes that artifact through the `github-pages` environment.
 
 Repository setup requirement: **Settings → Pages → Source: GitHub Actions**. The repository owner must enable that source once if Pages has not already been configured.
 
