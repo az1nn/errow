@@ -17,7 +17,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GODOT_VERSION: 4.7.2-stable
+  GODOT_RELEASE: 4.7.2-stable
+  GODOT_TEMPLATE_DIR: 4.7.2.stable
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   build:
@@ -26,18 +28,34 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout
+      - name: Checkout exact source revision
         uses: actions/checkout@v6
-
-      - name: Setup Godot
-        uses: lihop/setup-godot@v3
         with:
-          version: ${{ env.GODOT_VERSION }}
-          export-templates: true
-          cache: true
+          ref: ${{ env.SOURCE_SHA }}
+
+      - name: Install Godot and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fL --retry 3             -o /tmp/godot.zip             "https://github.com/godotengine/godot/releases/download/${GODOT_RELEASE}/Godot_v${GODOT_RELEASE}_linux.x86_64.zip"
+
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install -m 0755             "/tmp/godot/Godot_v${GODOT_RELEASE}_linux.x86_64"             /usr/local/bin/godot
+
+          curl -fL --retry 3             -o /tmp/godot-templates.tpz             "https://github.com/godotengine/godot/releases/download/${GODOT_RELEASE}/Godot_v${GODOT_RELEASE}_export_templates.tpz"
+
+          mkdir -p "${HOME}/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}"
+          unzip -q /tmp/godot-templates.tpz -d /tmp/godot-templates
+          cp -a             /tmp/godot-templates/templates/.             "${HOME}/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}/"
 
       - name: Show Godot version
         run: godot --version
+
+      - name: Verify checked out revision
+        run: |
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          echo "Validated source SHA: ${SOURCE_SHA}"
 
       - name: Import and parse project
         run: godot --headless --path . --editor --quit
@@ -54,9 +72,9 @@ jobs:
           test -f build/web/index.pck
 
       - name: Upload Web build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: errow-web-${{ github.sha }}
+          name: errow-web-${{ env.SOURCE_SHA }}
           path: build/web
           if-no-files-found: error
           retention-days: 14
