@@ -27,3 +27,9 @@ Main scene: `res://src/main.tscn`
 - Rendering: Godot compatibility renderer.
 - Current spec: `docs/SPEC-001-PLAYABLE-MVP.md`.
 - Continuation protocol: `.agents/skills/siga/`.
+
+## CI/CD
+
+Pull requests to `master` are validated with Godot 4.7.2 stable on GitHub Actions, including headless scene smoke tests and a real Web export. Pushes to `master` also feed the validated Web artifact to GitHub Pages.
+
+See `docs/CI-CD.md` for the pipeline contract.
