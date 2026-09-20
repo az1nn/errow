@@ -34,7 +34,7 @@ The level is complete when the board is empty.
 
 ## Verification boundary
 
-Repository validation can verify project structure, scene wiring, level data and deterministic path logic. Final runtime feel, sizing, glyph rendering and export behavior require opening the branch in Godot 4 and performing the human gameplay/visual gate.
+GitHub Actions validates the exact pull-request HEAD with Godot 4.7.2 stable: project import/parse, real-scene headless smoke tests, deterministic level assertions and Web export are automated gates. Final visual feel, responsive sizing, glyph rendering quality and touch UX remain a human gameplay/visual gate on a real browser or device.
 
 ## Next after MVP
 
