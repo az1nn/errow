@@ -55,3 +55,11 @@ godot --headless --path . --export-release "Web" build/web/index.html
 - `export_presets.cfg` — reproducible Web export.
 - `tests/smoke.gd` — runtime smoke gate.
 - `build/web` — generated output; never committed.
+
+## Human validation
+
+Human visual/device testing is intentionally asynchronous and non-blocking. It is not part of the default PR gate contract.
+
+Automated CI remains the blocking engineering gate. Device/browser observations are captured separately using `docs/HUMAN-TESTS.md` and converted into persistent follow-up work.
+
+A missing human test result must not, by itself, leave SIGA in `WATCH` or prevent a validated PR from becoming Ready for Review.
