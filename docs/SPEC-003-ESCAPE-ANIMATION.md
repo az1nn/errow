@@ -23,7 +23,7 @@ Make every successful move visibly leave the board in its arrow direction before
 - A second arrow tap cannot start another escape while one is active.
 - Restarting or changing level cancels the active tween and cannot remove an arrow from the newly loaded board.
 - Blocked-arrow feedback remains unchanged.
-- Headless smoke coverage verifies movement direction, deferred state removal and stale-callback protection.
+- Headless smoke coverage verifies the computed escape direction, deferred state removal and stale-callback protection.
 - Godot import/parse, smoke tests and Web export remain green.
 
 ## Non-goals
