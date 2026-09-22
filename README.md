@@ -33,3 +33,7 @@ Main scene: `res://src/main.tscn`
 Pull requests to `master` are validated with Godot 4.7.2 stable on GitHub Actions, including headless scene smoke tests and a real Web export. Pushes to `master` also feed the validated Web artifact to GitHub Pages.
 
 See `docs/CI-CD.md` for the pipeline contract.
+
+## Human testing
+
+Visual, browser and device checks run asynchronously and do not block normal development by default. Use `docs/HUMAN-TESTS.md` to record the tested SHA/build, environment, evidence and follow-up findings.
