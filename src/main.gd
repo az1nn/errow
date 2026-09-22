@@ -9,13 +9,6 @@ const DIRECTIONS := {
 	"L": Vector2i(-1, 0),
 }
 
-const GLYPHS := {
-	"U": "↑",
-	"R": "→",
-	"D": "↓",
-	"L": "←",
-}
-
 const LEVELS := [
 	{
 		"name": "First Escape",
@@ -275,13 +268,20 @@ func _rebuild_board() -> void:
 
 			var direction: String = active_arrows[cell]
 			var button := Button.new()
-			button.text = GLYPHS[direction]
+			button.text = ""
 			button.focus_mode = Control.FOCUS_NONE
 			button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-			button.add_theme_font_size_override("font_size", 66)
 			_apply_arrow_style(button)
 			button.pressed.connect(_on_arrow_pressed.bind(cell))
 			slot.add_child(button)
+
+			var visual := ArrowVisual.new()
+			visual.name = "ArrowVisual"
+			visual.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			visual.configure(direction)
+			button.add_child(visual)
+			visual.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
 			arrow_buttons[cell] = button
 
 

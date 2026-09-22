@@ -21,6 +21,13 @@ func _run() -> void:
 
 	_check(game != null, "main scene must instantiate")
 	_check(game.get("active_arrows").size() == 6, "level 1 must start with 6 arrows")
+
+	var first_button: Button = game.get("arrow_buttons")[Vector2i(2, 0)]
+	var first_visual := first_button.get_node_or_null("ArrowVisual")
+	_check(first_visual != null, "active arrows must use reusable ArrowVisual")
+	if first_visual != null:
+		_check(first_visual.call("get_direction") == "U", "ArrowVisual must receive the board direction")
+
 	_check(game.call("_can_exit", Vector2i(2, 0), "U") == true, "outer up arrow must be clear")
 	_check(game.call("_can_exit", Vector2i(2, 2), "U") == false, "center up arrow must start blocked")
 
