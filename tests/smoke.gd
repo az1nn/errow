@@ -4,10 +4,21 @@ const LevelRulesScript = preload("res://src/levels/level_rules.gd")
 const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
 
 var failures := 0
+var finished := false
 
 
 func _initialize() -> void:
+	var watchdog := create_timer(8.0)
+	watchdog.timeout.connect(_on_watchdog_timeout)
 	call_deferred("_run")
+
+
+func _on_watchdog_timeout() -> void:
+	if finished:
+		return
+	failures += 1
+	push_error("Godot smoke tests timed out before completion.")
+	quit(1)
 
 
 func _run() -> void:
@@ -114,6 +125,7 @@ func _check(condition: bool, message: String) -> void:
 
 
 func _finish() -> void:
+	finished = true
 	if failures > 0:
 		push_error("Godot smoke tests failed: %d" % failures)
 		quit(1)
