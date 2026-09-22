@@ -1,63 +1,67 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: Bootstrap SIGA protocol
-STATE: protocol persisted; PR #1 open at human merge gate
+WORKSTREAM: SPEC-001 — Playable MVP + Godot CI/CD
+STATE: playable MVP implemented; CI/CD operational; human tests async; automatic merge authorization persisted; PR #2 Ready for Review pending current exact-HEAD CI
 MODE: WATCH
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-001-PLAYABLE-MVP.md + docs/CI-CD.md + docs/HUMAN-TESTS.md
 
-CURRENT VERSION / HEAD: resolve current tip of chore/siga-protocol during VERIFY-FIRST; last verified pre-handoff HEAD was 220cdda2334c360f40bea6b0623973bd3fa444f1
-BASE: master @ 4889b6a56c2dd9ba38ebb9c86e673b6cdd256976
-BRANCH / ENV: chore/siga-protocol
-PR / MR / TASK: PR #1 — chore: add SIGA continuation protocol
-SPEC / ADR: SIGA HANDOFF v1
+CURRENT VERSION / HEAD: resolve live PR #2 HEAD during VERIFY-FIRST; latest authorization commit before this handoff was db5cc91d28adf4666d26736e87566efcba7dfaf1
+BASE: master @ fdee9639bf87eaffd1f2b7975e6a930786cc33f7
+BRANCH / ENV: feat/001-playable-mvp
+PR / MR / TASK: PR #2 — feat: playable Errow MVP — READY FOR REVIEW
+SPEC / ADR: SPEC-001-PLAYABLE-MVP
 
 DONE:
-- Reconciled repository state directly from GitHub.
-- Verified default branch is master.
-- Verified master contained only README.md before this workstream.
-- Verified no pull requests existed before this workstream.
-- Created branch chore/siga-protocol.
-- Persisted .agents/skills/siga/SKILL.md.
-- Persisted .agents/skills/siga/HANDOFF.md.
-- Opened PR #1.
-- Verified PR #1 contains exactly two changed files for the repository-local SIGA protocol.
+- Human visual/device/gameplay testing is asynchronous and non-blocking by default.
+- PR #2 is Ready for Review.
+- User authorized automatic merge for Errow whenever all applicable tests and verifications pass.
+- Repository-local SIGA skill now persists the automatic merge contract.
+- Automatic merge requires an open, non-draft, mergeable PR; exact live HEAD resolution; all applicable tests/checks/workflows green; no active jobs, blockers, or change-request reviews; and no exceptional user-declared gate.
+- Merge must use expected_head_sha.
+- Post-merge master workflows/deployments must be reconciled and consumed.
 
 VERIFY:
-- GitHub PR state read directly.
-- On pre-handoff HEAD 220cdda2334c360f40bea6b0623973bd3fa444f1:
-  - workflow runs: none;
-  - combined status checks: none.
-- No automated CI gate is configured on that verified HEAD.
-- Because this handoff update creates a new commit, next execution must resolve and verify the current branch tip rather than trusting the recorded pre-handoff SHA.
+- Previous exact HEAD 9285200178ba47cc0dbafd272e9677a1ed9deb06 passed Godot CI/CD run 35722078032.
+- That run passed exact checkout, Godot setup/version, import/parse, headless scene smoke tests, Web export and artifact upload.
+- Policy commits after that run create a new PR HEAD, so current exact-HEAD CI must complete before automatic merge.
+- Human-test absence is not a blocker.
 
 GATES:
-- PR #1 merge is a human gate unless explicitly authorized.
-- No automated CI/check gate was present on the last verified pre-handoff HEAD.
+- Automated exact-HEAD CI is the blocking engineering gate.
+- Merge is no longer a human gate when the persisted automatic-merge conditions are satisfied.
+- Human visual/device/gameplay tests remain asynchronous unless the user explicitly declares a specific exception.
+- GitHub Pages is only considered deployed after a successful master deploy job.
 
 BLOCKERS:
-- none.
+- No known implementation blocker.
+- Waiting only for current exact-HEAD CI triggered by the authorization/handoff changes.
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
 - VERIFY-FIRST on every standalone `Siga`.
 - Exactly one of RESUME / WATCH / ADVANCE after reconciliation.
 - No parallel canonical SIGA state outside this repository.
-- Do not duplicate active work.
-- Do not declare green gates without same-HEAD evidence.
-- Treat a persisted HEAD as a hint; always resolve the live branch/PR HEAD first.
+- Do not merge stale HEADs: use expected_head_sha.
+- Do not merge while a relevant test/check/job is failing or active.
+- Do not invent implicit human gates.
+- After automatic merge, verify master CI/deploy before advancing.
 
 NEXT:
-- On the next standalone `Siga`, reconcile PR #1 first.
-- If PR #1 remains open with no failing/running checks, remain WATCH at the human merge gate.
-- If PR #1 is merged/closed and no other work is active, classify ADVANCE from the repository roadmap/state.
-- Do not merge automatically without explicit authorization.
+- Resolve PR #2 live HEAD and consume Godot CI/CD for that exact SHA.
+- If CI fails, RESUME and fix PR #2 in place.
+- If all applicable verification is green and the PR remains mergeable/non-draft, merge PR #2 automatically using expected_head_sha.
+- Reconcile master after merge.
+- Consume master Godot CI/CD and GitHub Pages deployment.
+- If post-merge gates succeed, classify ADVANCE to the next gameplay workstream.
+- If Pages setup prevents deployment, report the concrete infrastructure blocker without reverting the successful code merge.
 
 VERIFY-FIRST:
-1. Read this handoff from the repository.
-2. Inspect az1nn/errow default branch and open PRs.
-3. Inspect PR #1 and branch chore/siga-protocol if they still exist.
-4. Resolve the live PR/branch HEAD SHA.
-5. Inspect workflow runs/status checks for that exact SHA.
-6. Inspect review/merge gate state.
-7. Classify exactly RESUME, WATCH, or ADVANCE from the reconciled state.
+1. Read this handoff and repository-local SIGA skill.
+2. Inspect PR #2 and resolve its exact live HEAD.
+3. Inspect all current tests/checks/workflows/reviews/blockers for that HEAD.
+4. If merge conditions are satisfied, merge automatically with expected_head_sha.
+5. Resolve the new master HEAD.
+6. Inspect master CI/CD and Pages deployment.
+7. Fix failures when possible.
+8. Classify RESUME, WATCH, or ADVANCE from the reconciled state.
