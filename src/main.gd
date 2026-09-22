@@ -10,7 +10,7 @@ const LevelCreatorScript = preload("res://src/level_creator.gd")
 
 var levels: Array = []
 var level_collection := "official"
-var local_level_store
+var local_level_store: LocalLevelStore
 
 var level_index := 0
 var moves := 0
@@ -30,7 +30,7 @@ var overlay: ColorRect
 var overlay_title: Label
 var overlay_copy: Label
 var overlay_button: Button
-var creator
+var creator: LevelCreator
 
 
 func _ready() -> void:
@@ -254,7 +254,7 @@ func _show_official_levels() -> void:
 
 
 func _show_player_levels() -> void:
-	var saved_levels := local_level_store.list_levels()
+	var saved_levels: Array = local_level_store.list_levels()
 	var playable_levels: Array = []
 	for level in saved_levels:
 		if LevelRulesScript.is_solvable(level):
