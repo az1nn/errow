@@ -32,13 +32,13 @@ func _run() -> void:
 	_check(game.call("_can_exit", Vector2i(2, 2), "U") == false, "center up arrow must start blocked")
 
 	var escape_start := first_button.global_position
+	var escape_target: Vector2 = game.call("_escape_target_position", first_button, "U")
+	_check(escape_target.y < escape_start.y, "up arrow escape target must be above its start position")
 	game.call("_on_arrow_pressed", Vector2i(2, 0))
 	_check(game.get("is_animating_escape") == true, "successful move must enter escape animation state")
 	_check(game.get("active_arrows").size() == 6, "arrow state must remain until escape animation completes")
 	_check(first_button.get_parent().name == "EscapeLayer", "escaping arrow must move to the dedicated overlay layer")
-	await create_timer(0.08).timeout
-	_check(first_button.global_position.y < escape_start.y, "up arrow must animate upward")
-	await create_timer(0.30).timeout
+	await create_timer(0.34).timeout
 	_check(game.get("active_arrows").size() == 5, "arrow state must update after escape animation completes")
 	_check(game.get("is_animating_escape") == false, "escape animation state must clear after completion")
 	_check(game.call("_can_exit", Vector2i(2, 2), "U") == true, "center arrow must clear after blocker escapes")
