@@ -317,9 +317,8 @@ func _on_arrow_pressed(cell: Vector2i) -> void:
 
 	var button: Button = arrow_buttons[cell]
 	button.disabled = true
-	var direction := Vector2(DIRECTIONS[direction_code])
 	var start_position := button.global_position
-	var target_position := start_position + direction * _escape_distance(button)
+	var target_position := _escape_target_position(button, direction_code)
 
 	button.reparent(escape_layer, true)
 	button.global_position = start_position
@@ -349,6 +348,11 @@ func _cancel_escape_animation() -> void:
 
 	for child in escape_layer.get_children():
 		child.free()
+
+
+func _escape_target_position(button: Control, direction_code: String) -> Vector2:
+	var direction := Vector2(DIRECTIONS[direction_code])
+	return button.global_position + direction * _escape_distance(button)
 
 
 func _escape_distance(button: Control) -> float:
