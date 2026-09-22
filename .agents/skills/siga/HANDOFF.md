@@ -1,28 +1,31 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: SPEC-003 — Escape Animation
-STATE: IMPLEMENTED ON FEATURE BRANCH; verification/PR state must be resolved live
+WORKSTREAM: SPEC-004 — Player-created levels
+STATE: IMPLEMENTED ON FEATURE BRANCH; PR verification pending
 MODE: RESUME
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-003-ESCAPE-ANIMATION.md
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-004-PLAYER-LEVELS.md
 
-CURRENT VERSION / HEAD: resolve live feature HEAD during VERIFY-FIRST
-BASE: master @ 845376cf93c7b62f67663bb63da5ca8903fc17cc
-BRANCH / ENV: feat/003-escape-animation / GitHub Actions
-PR / MR / TASK: create or resume the SPEC-003 PR
-SPEC / ADR: SPEC-003-ESCAPE-ANIMATION
+CURRENT VERSION / HEAD: resolve live feat/004-player-levels HEAD during VERIFY-FIRST
+BASE: master after merged PR #4 (d4826e3654ce3d7468b8bab2b7141aa828dc1e92)
+BRANCH / ENV: feat/004-player-levels / GitHub Actions
+PR / MR / TASK: create or resume SPEC-004 PR
+SPEC / ADR: SPEC-004-PLAYER-LEVELS + UGC-RESEARCH
 
 DONE:
-- Added the SPEC-003 contract for directional movement/escape animation.
-- Successful arrows are reparented to a dedicated EscapeLayer, move in U/R/D/L direction and fade before state removal.
-- Successful arrow interactions are serialized while an escape tween is active.
-- Restart/level changes kill the active tween and clear escaping visuals to prevent stale callbacks mutating a new board.
-- Smoke coverage exercises directional movement, deferred removal and restart cancellation.
+- Researched UGC patterns from Super Mario Maker 2, Portal 2 and Trackmania.
+- Extracted original levels into a data-backed LevelCatalog.
+- Added shared LevelRules structural validation, can-exit rule and deterministic deadlock solver.
+- Added LocalLevelStore JSON persistence under user://.
+- Added in-game LevelCreator with 5x5 cell direction cycling, draft save/load and solvability status.
+- Added Original / My levels / Create navigation.
+- Player playtests use the exact gameplay runtime and escape animation used by original levels.
+- Added smoke coverage for catalog, deadlock detection and local JSON round trip.
 
 VERIFY:
-- Exact feature HEAD Godot CI/CD is still required.
-- Required gates: Godot import/parse, headless smoke tests, Web export.
-- Human visual/device/gameplay testing remains asynchronous and non-blocking by default.
+- Exact feature HEAD Godot CI/CD is required.
+- Required gates: import/parse, headless smoke tests and Web export.
+- Human visual/browser/mobile validation remains asynchronous and non-blocking by default.
 
 GATES:
 - No explicit human gate.
@@ -33,19 +36,19 @@ BLOCKERS:
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
-- VERIFY-FIRST on every standalone Siga.
-- No parallel canonical SIGA state outside this repository.
-- Do not invent implicit human gates.
+- No executable player content; community levels are constrained schema-v1 data.
+- Original and Player remain separate sources.
 - Merge only exact verified PR HEAD.
 
 NEXT:
-- Create/resume PR for feat/003-escape-animation.
-- Resolve exact HEAD, run/inspect CI and fix failures.
-- Merge automatically when the repository-local conditions are satisfied.
-- Reconcile master and post-merge Pages deployment, then persist a completed handoff.
+- Open/resume the SPEC-004 PR.
+- Fix any CI findings without weakening validation.
+- Merge automatically when exact-head gates pass.
+- Reconcile master and post-merge Pages deployment.
+- Next product increment: remote CommunityLevelProvider + discovery/publish flow.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Resolve live feature/master HEAD, open PRs and Actions runs.
-3. If CI is pending, WATCH it; if red, RESUME and fix; if green and mergeable, merge with expected_head_sha.
-4. After merge, verify master CI/Pages and close the handoff on master.
+2. Resolve live feat/004-player-levels HEAD, PR state and Actions.
+3. If red, fix; if active, consume results; if green and mergeable, merge exact HEAD.
+4. After merge, verify master and persist a completed handoff.
