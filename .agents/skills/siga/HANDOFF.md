@@ -2,56 +2,54 @@ CAVEMAN HANDOFF v1
 
 APP: Errow
 WORKSTREAM: SPEC-002 — Reusable Arrow Visual
-STATE: SPEC-001 merged and deployed; SPEC-002 implemented in PR #3; exact-HEAD CI pending
-MODE: WATCH
+STATE: COMPLETE; merged to master and deployed to GitHub Pages
+MODE: ADVANCE
 CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-002-ARROW-VISUAL.md
 
-CURRENT VERSION / HEAD: resolve live PR #3 HEAD during VERIFY-FIRST
-BASE: master @ eba2d1334c7dca3370d61ba23f6f954700e2052f
-BRANCH / ENV: feat/002-arrow-visual
-PR / MR / TASK: PR #3 — feat: reusable vector arrow visual
+CURRENT VERSION / HEAD: resolve live master HEAD during VERIFY-FIRST; gameplay merge commit is 5d7ac06bac91e457ed4c3fa64ae55c9911f80d57
+BASE: master
+BRANCH / ENV: master / GitHub Pages
+PR / MR / TASK: PR #3 — MERGED
 SPEC / ADR: SPEC-002-ARROW-VISUAL
 
 DONE:
-- PR #2 / SPEC-001 merged into master.
-- Master Godot CI/CD run 35722525772 passed import/parse, smoke tests, Web export, artifact upload and GitHub Pages deployment.
-- Added reusable vector ArrowVisual for U/R/D/L.
-- Removed Unicode glyph dependency from board arrows.
-- Preserved parent Button as the touch target and existing gameplay feedback.
-- Added real-scene smoke assertions for ArrowVisual wiring/direction.
-- Added SPEC-002 and updated README.
+- SPEC-001 playable MVP was already merged and deployed.
+- SPEC-002 added reusable vector ArrowVisual rendering for U/R/D/L.
+- Unicode glyph dependency was removed from board arrows.
+- Existing puzzle rules, levels, touch targets, blocked feedback, counters and progression were preserved.
+- Real-scene smoke coverage verifies ArrowVisual wiring and direction.
+- PR #3 merged automatically under the repository-local authorization at exact HEAD 8a67800dc8a21f8942dcacaef957722d93c4dedb.
+- Merge commit: 5d7ac06bac91e457ed4c3fa64ae55c9911f80d57.
 
 VERIFY:
-- Blocking verification is the Godot CI/CD workflow for the exact live PR #3 HEAD.
+- PR exact-HEAD Godot CI/CD run 35723039399: SUCCESS.
+- Post-merge master Godot CI/CD run 35723167268: SUCCESS.
+- Post-merge import/parse, headless smoke tests, Web export and Pages artifact upload: SUCCESS.
+- GitHub Pages deploy job for merge commit 5d7ac06: SUCCESS.
 - Human visual/device/gameplay testing remains asynchronous and non-blocking by default.
 
 GATES:
-- Exact-HEAD Godot CI/CD must be green before merge.
-- Merge may proceed automatically under the repository-local SIGA authorization if the PR is non-draft, mergeable and has no blockers/reviews requiring changes.
-- Post-merge master CI/CD and Pages deploy must pass before this workstream is complete.
+- No active gate for SPEC-002.
+- No explicit human gate.
+- Automatic merge authorization remains active under SKILL.md conditions.
 
 BLOCKERS:
-- No known implementation blocker.
-- Waiting for exact-HEAD CI on PR #3.
+- None known.
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
 - VERIFY-FIRST on every standalone Siga.
 - No parallel canonical SIGA state outside this repository.
-- Do not merge stale HEADs; use expected_head_sha.
 - Do not invent implicit human gates.
+- Human findings are follow-up evidence, not a default blocker.
 
 NEXT:
-- Resolve PR #3 live HEAD.
-- Consume all exact-HEAD checks/workflows/reviews.
-- If green and mergeable, merge automatically with expected_head_sha.
-- Reconcile master and verify post-merge Godot CI/CD + GitHub Pages.
-- If successful, ADVANCE to movement/escape animation; keep haptics optional and capability-gated.
+- ADVANCE to the next independent gameplay increment: movement/escape animation.
+- Treat haptics as optional and capability-gated; do not make unsupported Web haptics a blocker.
+- Keep level-data separation and additional boards after the interaction/animation primitive unless new evidence changes priority.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Fetch PR #3 and resolve its live HEAD/mergeability.
-3. Inspect workflows/checks/reviews for that exact SHA.
-4. Fix failures in place or merge automatically if all conditions are satisfied.
-5. After merge, verify master CI/CD and Pages deployment.
-6. Reclassify RESUME, WATCH or ADVANCE from real state.
+2. Resolve live master HEAD and inspect any workflows/jobs created after this handoff.
+3. Confirm no open PR/workstream or failing deployment supersedes this state.
+4. If master is green and idle, remain ADVANCE and create the movement/escape animation workstream.
