@@ -34,12 +34,14 @@ The level is complete when the board is empty.
 
 ## Verification boundary
 
-GitHub Actions validates the exact pull-request HEAD with Godot 4.7.2 stable: project import/parse, real-scene headless smoke tests, deterministic level assertions and Web export are automated gates. Final visual feel, responsive sizing, glyph rendering quality and touch UX remain a human gameplay/visual gate on a real browser or device.
+GitHub Actions validates the exact pull-request HEAD with Godot 4.7.2 stable: project import/parse, real-scene headless smoke tests, deterministic level assertions and Web export are the blocking engineering gates.
+
+Human checks for visual feel, responsive sizing, glyph rendering quality and touch UX are asynchronous and non-blocking by default. Findings are persisted as issues, PR comments or follow-up tasks under `docs/HUMAN-TESTS.md`; they do not hold the active workstream in WATCH unless the user explicitly declares a specific human gate.
 
 ## Next after MVP
 
-- Runtime/export smoke test in Godot.
-- Tune board sizing from real phone/browser screenshots.
+- Consume asynchronous human-test findings from real phone/browser sessions.
+- Tune board sizing from real phone/browser screenshots when evidence justifies it.
 - Replace text glyph arrows with a dedicated reusable arrow visual.
 - Add movement/escape animation and haptics where supported.
 - Add a level format separate from presentation code.
