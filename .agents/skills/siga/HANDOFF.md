@@ -1,67 +1,57 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: SPEC-001 — Playable MVP + Godot CI/CD
-STATE: playable MVP implemented; CI/CD operational; human tests async; automatic merge authorization persisted; PR #2 Ready for Review pending current exact-HEAD CI
+WORKSTREAM: SPEC-002 — Reusable Arrow Visual
+STATE: SPEC-001 merged and deployed; SPEC-002 implemented in PR #3; exact-HEAD CI pending
 MODE: WATCH
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-001-PLAYABLE-MVP.md + docs/CI-CD.md + docs/HUMAN-TESTS.md
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-002-ARROW-VISUAL.md
 
-CURRENT VERSION / HEAD: resolve live PR #2 HEAD during VERIFY-FIRST; latest authorization commit before this handoff was db5cc91d28adf4666d26736e87566efcba7dfaf1
-BASE: master @ fdee9639bf87eaffd1f2b7975e6a930786cc33f7
-BRANCH / ENV: feat/001-playable-mvp
-PR / MR / TASK: PR #2 — feat: playable Errow MVP — READY FOR REVIEW
-SPEC / ADR: SPEC-001-PLAYABLE-MVP
+CURRENT VERSION / HEAD: resolve live PR #3 HEAD during VERIFY-FIRST
+BASE: master @ eba2d1334c7dca3370d61ba23f6f954700e2052f
+BRANCH / ENV: feat/002-arrow-visual
+PR / MR / TASK: PR #3 — feat: reusable vector arrow visual
+SPEC / ADR: SPEC-002-ARROW-VISUAL
 
 DONE:
-- Human visual/device/gameplay testing is asynchronous and non-blocking by default.
-- PR #2 is Ready for Review.
-- User authorized automatic merge for Errow whenever all applicable tests and verifications pass.
-- Repository-local SIGA skill now persists the automatic merge contract.
-- Automatic merge requires an open, non-draft, mergeable PR; exact live HEAD resolution; all applicable tests/checks/workflows green; no active jobs, blockers, or change-request reviews; and no exceptional user-declared gate.
-- Merge must use expected_head_sha.
-- Post-merge master workflows/deployments must be reconciled and consumed.
+- PR #2 / SPEC-001 merged into master.
+- Master Godot CI/CD run 35722525772 passed import/parse, smoke tests, Web export, artifact upload and GitHub Pages deployment.
+- Added reusable vector ArrowVisual for U/R/D/L.
+- Removed Unicode glyph dependency from board arrows.
+- Preserved parent Button as the touch target and existing gameplay feedback.
+- Added real-scene smoke assertions for ArrowVisual wiring/direction.
+- Added SPEC-002 and updated README.
 
 VERIFY:
-- Previous exact HEAD 9285200178ba47cc0dbafd272e9677a1ed9deb06 passed Godot CI/CD run 35722078032.
-- That run passed exact checkout, Godot setup/version, import/parse, headless scene smoke tests, Web export and artifact upload.
-- Policy commits after that run create a new PR HEAD, so current exact-HEAD CI must complete before automatic merge.
-- Human-test absence is not a blocker.
+- Blocking verification is the Godot CI/CD workflow for the exact live PR #3 HEAD.
+- Human visual/device/gameplay testing remains asynchronous and non-blocking by default.
 
 GATES:
-- Automated exact-HEAD CI is the blocking engineering gate.
-- Merge is no longer a human gate when the persisted automatic-merge conditions are satisfied.
-- Human visual/device/gameplay tests remain asynchronous unless the user explicitly declares a specific exception.
-- GitHub Pages is only considered deployed after a successful master deploy job.
+- Exact-HEAD Godot CI/CD must be green before merge.
+- Merge may proceed automatically under the repository-local SIGA authorization if the PR is non-draft, mergeable and has no blockers/reviews requiring changes.
+- Post-merge master CI/CD and Pages deploy must pass before this workstream is complete.
 
 BLOCKERS:
 - No known implementation blocker.
-- Waiting only for current exact-HEAD CI triggered by the authorization/handoff changes.
+- Waiting for exact-HEAD CI on PR #3.
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
-- VERIFY-FIRST on every standalone `Siga`.
-- Exactly one of RESUME / WATCH / ADVANCE after reconciliation.
+- VERIFY-FIRST on every standalone Siga.
 - No parallel canonical SIGA state outside this repository.
-- Do not merge stale HEADs: use expected_head_sha.
-- Do not merge while a relevant test/check/job is failing or active.
+- Do not merge stale HEADs; use expected_head_sha.
 - Do not invent implicit human gates.
-- After automatic merge, verify master CI/deploy before advancing.
 
 NEXT:
-- Resolve PR #2 live HEAD and consume Godot CI/CD for that exact SHA.
-- If CI fails, RESUME and fix PR #2 in place.
-- If all applicable verification is green and the PR remains mergeable/non-draft, merge PR #2 automatically using expected_head_sha.
-- Reconcile master after merge.
-- Consume master Godot CI/CD and GitHub Pages deployment.
-- If post-merge gates succeed, classify ADVANCE to the next gameplay workstream.
-- If Pages setup prevents deployment, report the concrete infrastructure blocker without reverting the successful code merge.
+- Resolve PR #3 live HEAD.
+- Consume all exact-HEAD checks/workflows/reviews.
+- If green and mergeable, merge automatically with expected_head_sha.
+- Reconcile master and verify post-merge Godot CI/CD + GitHub Pages.
+- If successful, ADVANCE to movement/escape animation; keep haptics optional and capability-gated.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Inspect PR #2 and resolve its exact live HEAD.
-3. Inspect all current tests/checks/workflows/reviews/blockers for that HEAD.
-4. If merge conditions are satisfied, merge automatically with expected_head_sha.
-5. Resolve the new master HEAD.
-6. Inspect master CI/CD and Pages deployment.
-7. Fix failures when possible.
-8. Classify RESUME, WATCH, or ADVANCE from the reconciled state.
+2. Fetch PR #3 and resolve its live HEAD/mergeability.
+3. Inspect workflows/checks/reviews for that exact SHA.
+4. Fix failures in place or merge automatically if all conditions are satisfied.
+5. After merge, verify master CI/CD and Pages deployment.
+6. Reclassify RESUME, WATCH or ADVANCE from real state.
