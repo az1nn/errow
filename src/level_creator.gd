@@ -10,7 +10,7 @@ const ArrowVisualScript = preload("res://src/arrow_visual.gd")
 
 const CYCLE := ["", "U", "R", "D", "L"]
 
-var store := LocalLevelStoreScript.new()
+var store: LocalLevelStore = LocalLevelStoreScript.new()
 var editor_arrows: Dictionary = {}
 var cell_buttons: Dictionary = {}
 var saved_levels: Array = []
@@ -155,7 +155,7 @@ func _new_level() -> void:
 func _cycle_cell(cell: Vector2i) -> void:
 	var current := str(editor_arrows.get(cell, ""))
 	var current_index := CYCLE.find(current)
-	var next_direction := CYCLE[(current_index + 1) % CYCLE.size()]
+	var next_direction: String = CYCLE[(current_index + 1) % CYCLE.size()]
 
 	if next_direction.is_empty():
 		editor_arrows.erase(cell)
