@@ -63,11 +63,12 @@ static func can_exit(active_arrows: Dictionary, cell: Vector2i, direction_code: 
 	if not DIRECTIONS.has(direction_code):
 		return false
 
-	var cursor := cell + DIRECTIONS[direction_code]
+	var direction: Vector2i = DIRECTIONS[direction_code]
+	var cursor: Vector2i = cell + direction
 	while _inside_grid(cursor, grid_size):
 		if active_arrows.has(cursor):
 			return false
-		cursor += DIRECTIONS[direction_code]
+		cursor += direction
 
 	return true
 
