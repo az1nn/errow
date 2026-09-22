@@ -1,6 +1,7 @@
 extends Control
 
 const GRID_SIZE := 5
+const ESCAPE_DURATION := 0.28
 
 const DIRECTIONS := {
 	"U": Vector2i(0, -1),
@@ -55,6 +56,8 @@ var level_index := 0
 var moves := 0
 var active_arrows: Dictionary = {}
 var arrow_buttons: Dictionary = {}
+var is_animating_escape := false
+var escape_tween: Tween
 
 var level_label: Label
 var subtitle_label: Label
@@ -62,6 +65,7 @@ var remaining_label: Label
 var moves_label: Label
 var status_label: Label
 var grid: GridContainer
+var escape_layer: Control
 var overlay: ColorRect
 var overlay_title: Label
 var overlay_copy: Label
@@ -178,6 +182,12 @@ func _build_ui() -> void:
 	_apply_action_style(skip)
 	actions.add_child(skip)
 
+	escape_layer = Control.new()
+	escape_layer.name = "EscapeLayer"
+	escape_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	escape_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(escape_layer)
+
 	overlay = ColorRect.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.color = Color(0.02, 0.03, 0.05, 0.88)
@@ -232,6 +242,7 @@ func _build_ui() -> void:
 
 
 func _load_level(index: int) -> void:
+	_cancel_escape_animation()
 	level_index = clampi(index, 0, LEVELS.size() - 1)
 	moves = 0
 	active_arrows.clear()
@@ -288,6 +299,8 @@ func _rebuild_board() -> void:
 func _on_arrow_pressed(cell: Vector2i) -> void:
 	if not active_arrows.has(cell):
 		return
+	if is_animating_escape:
+		return
 
 	var direction_code: String = active_arrows[cell]
 	if not _can_exit(cell, direction_code):
@@ -300,11 +313,50 @@ func _on_arrow_pressed(cell: Vector2i) -> void:
 
 	status_label.text = "Clear path — arrow escaped."
 	moves += 1
+	is_animating_escape = true
+
 	var button: Button = arrow_buttons[cell]
 	button.disabled = true
-	var tween := create_tween()
-	tween.tween_property(button, "modulate:a", 0.0, 0.12)
-	tween.tween_callback(_remove_arrow.bind(cell))
+	var start_position := button.global_position
+	var target_position := _escape_target_position(button, direction_code)
+
+	button.reparent(escape_layer, true)
+	button.global_position = start_position
+
+	escape_tween = create_tween()
+	escape_tween.tween_property(button, "global_position", target_position, ESCAPE_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	escape_tween.parallel().tween_property(button, "modulate:a", 0.0, ESCAPE_DURATION)
+	escape_tween.tween_callback(_finish_escape.bind(cell, button))
+
+
+func _finish_escape(cell: Vector2i, button: Button) -> void:
+	escape_tween = null
+	if is_instance_valid(button):
+		button.free()
+	is_animating_escape = false
+	_remove_arrow(cell)
+
+
+func _cancel_escape_animation() -> void:
+	if escape_tween != null:
+		escape_tween.kill()
+		escape_tween = null
+
+	is_animating_escape = false
+	if escape_layer == null:
+		return
+
+	for child in escape_layer.get_children():
+		child.free()
+
+
+func _escape_target_position(button: Control, direction_code: String) -> Vector2:
+	var direction := Vector2(DIRECTIONS[direction_code])
+	return button.global_position + direction * _escape_distance(button)
+
+
+func _escape_distance(button: Control) -> float:
+	return maxf(grid.size.x, grid.size.y) + maxf(button.size.x, button.size.y)
 
 
 func _remove_arrow(cell: Vector2i) -> void:

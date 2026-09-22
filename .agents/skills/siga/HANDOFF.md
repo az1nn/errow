@@ -1,55 +1,51 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: SPEC-002 — Reusable Arrow Visual
-STATE: COMPLETE; merged to master and deployed to GitHub Pages
-MODE: ADVANCE
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-002-ARROW-VISUAL.md
+WORKSTREAM: SPEC-003 — Escape Animation
+STATE: IMPLEMENTED ON FEATURE BRANCH; verification/PR state must be resolved live
+MODE: RESUME
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-003-ESCAPE-ANIMATION.md
 
-CURRENT VERSION / HEAD: resolve live master HEAD during VERIFY-FIRST; gameplay merge commit is 5d7ac06bac91e457ed4c3fa64ae55c9911f80d57
-BASE: master
-BRANCH / ENV: master / GitHub Pages
-PR / MR / TASK: PR #3 — MERGED
-SPEC / ADR: SPEC-002-ARROW-VISUAL
+CURRENT VERSION / HEAD: resolve live feature HEAD during VERIFY-FIRST
+BASE: master @ 845376cf93c7b62f67663bb63da5ca8903fc17cc
+BRANCH / ENV: feat/003-escape-animation / GitHub Actions
+PR / MR / TASK: create or resume the SPEC-003 PR
+SPEC / ADR: SPEC-003-ESCAPE-ANIMATION
 
 DONE:
-- SPEC-001 playable MVP was already merged and deployed.
-- SPEC-002 added reusable vector ArrowVisual rendering for U/R/D/L.
-- Unicode glyph dependency was removed from board arrows.
-- Existing puzzle rules, levels, touch targets, blocked feedback, counters and progression were preserved.
-- Real-scene smoke coverage verifies ArrowVisual wiring and direction.
-- PR #3 merged automatically under the repository-local authorization at exact HEAD 8a67800dc8a21f8942dcacaef957722d93c4dedb.
-- Merge commit: 5d7ac06bac91e457ed4c3fa64ae55c9911f80d57.
+- Added the SPEC-003 contract for directional movement/escape animation.
+- Successful arrows are reparented to a dedicated EscapeLayer, move in U/R/D/L direction and fade before state removal.
+- Successful arrow interactions are serialized while an escape tween is active.
+- Restart/level changes kill the active tween and clear escaping visuals to prevent stale callbacks mutating a new board.
+- Smoke coverage exercises directional movement, deferred removal and restart cancellation.
 
 VERIFY:
-- PR exact-HEAD Godot CI/CD run 35723039399: SUCCESS.
-- Post-merge master Godot CI/CD run 35723167268: SUCCESS.
-- Post-merge import/parse, headless smoke tests, Web export and Pages artifact upload: SUCCESS.
-- GitHub Pages deploy job for merge commit 5d7ac06: SUCCESS.
+- Exact feature HEAD Godot CI/CD is still required.
+- Required gates: Godot import/parse, headless smoke tests, Web export.
 - Human visual/device/gameplay testing remains asynchronous and non-blocking by default.
 
 GATES:
-- No active gate for SPEC-002.
 - No explicit human gate.
 - Automatic merge authorization remains active under SKILL.md conditions.
 
 BLOCKERS:
-- None known.
+- None known before CI.
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
 - VERIFY-FIRST on every standalone Siga.
 - No parallel canonical SIGA state outside this repository.
 - Do not invent implicit human gates.
-- Human findings are follow-up evidence, not a default blocker.
+- Merge only exact verified PR HEAD.
 
 NEXT:
-- ADVANCE to the next independent gameplay increment: movement/escape animation.
-- Treat haptics as optional and capability-gated; do not make unsupported Web haptics a blocker.
-- Keep level-data separation and additional boards after the interaction/animation primitive unless new evidence changes priority.
+- Create/resume PR for feat/003-escape-animation.
+- Resolve exact HEAD, run/inspect CI and fix failures.
+- Merge automatically when the repository-local conditions are satisfied.
+- Reconcile master and post-merge Pages deployment, then persist a completed handoff.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Resolve live master HEAD and inspect any workflows/jobs created after this handoff.
-3. Confirm no open PR/workstream or failing deployment supersedes this state.
-4. If master is green and idle, remain ADVANCE and create the movement/escape animation workstream.
+2. Resolve live feature/master HEAD, open PRs and Actions runs.
+3. If CI is pending, WATCH it; if red, RESUME and fix; if green and mergeable, merge with expected_head_sha.
+4. After merge, verify master CI/Pages and close the handoff on master.
