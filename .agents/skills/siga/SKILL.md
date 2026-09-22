@@ -202,6 +202,22 @@ O agente deve apresentar exatamente:
 - decisão necessária;
 - efeito de cada alternativa relevante.
 
+### Regra de testes humanos assíncronos — Errow
+
+Teste humano pendente NÃO é, por si só, um human gate.
+
+No Errow:
+
+- validação visual, responsividade, touch UX e gameplay feel são trabalho assíncrono por padrão;
+- a ausência de resultado humano não deve manter o workstream em `WATCH`;
+- um PR automatizado e verificavelmente verde pode avançar para Ready for Review sem aguardar teste humano;
+- achados humanos devem ser persistidos como issue, comentário de PR ou task de follow-up;
+- somente uma decisão explicitamente declarada pelo usuário como gate pode bloquear avanço;
+- gates técnicos automatizados vermelhos continuam bloqueantes;
+- merge, produção, custo ou mudança destrutiva permanecem gates quando explicitamente reservados ao usuário.
+
+Consultar `docs/HUMAN-TESTS.md` para o protocolo de evidência e triagem.
+
 ## HANDOFF DURÁVEL
 
 Ao atingir uma fronteira natural de sessão, gere um único handoff compacto.
