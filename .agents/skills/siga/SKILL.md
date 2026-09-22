@@ -218,6 +218,29 @@ No Errow:
 
 Consultar `docs/HUMAN-TESTS.md` para o protocolo de evidência e triagem.
 
+### Autorização permanente de merge — Errow
+
+O usuário autorizou o agente a realizar merge automaticamente quando a unidade de trabalho estiver verificavelmente pronta.
+
+Para um PR do Errow, o merge pode ser executado sem nova confirmação quando, no estado real atual:
+
+- o PR está aberto e mergeável;
+- não está em Draft;
+- o HEAD exato foi resolvido novamente imediatamente antes da decisão;
+- todos os testes, builds, checks, workflows e verificações aplicáveis ao HEAD exato concluíram com sucesso;
+- não existe falha, job ainda ativo, blocker persistido ou review que exija mudança antes do merge;
+- não existe um gate excepcional explicitamente declarado pelo usuário para aquele PR específico.
+
+Quando essas condições forem satisfeitas:
+
+1. faça o merge usando `expected_head_sha` para impedir merge de um HEAD que mudou;
+2. reconcilie `master` após o merge;
+3. acompanhe os workflows/deploys disparados pelo merge;
+4. corrija falhas pós-merge no mesmo fluxo quando possível;
+5. só considere o ciclo concluído depois que os gates pós-merge aplicáveis terminarem.
+
+Merge aprovado desta forma não deve manter o workstream em `WATCH` aguardando uma confirmação humana redundante.
+
 ## HANDOFF DURÁVEL
 
 Ao atingir uma fronteira natural de sessão, gere um único handoff compacto.
