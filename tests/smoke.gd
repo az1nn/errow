@@ -51,7 +51,7 @@ func _run() -> void:
 	_check(LevelRulesScript.is_solvable(deadlocked_level) == false, "opposing arrows must be detected as a deadlock")
 
 	var test_store_path := "user://errow-smoke-community-levels.json"
-	var test_store = LocalLevelStoreScript.new(test_store_path)
+	var test_store: LocalLevelStore = LocalLevelStoreScript.new(test_store_path)
 	test_store.clear_levels()
 	var saved_result: Dictionary = test_store.upsert_level({
 		"schema_version": 1,
@@ -64,7 +64,7 @@ func _run() -> void:
 		],
 	})
 	_check(bool(saved_result.get("ok", false)), "player level store must save a valid level")
-	var stored_levels := test_store.list_levels()
+	var stored_levels: Array = test_store.list_levels()
 	_check(stored_levels.size() == 1, "player level store must load the saved level")
 	if stored_levels.size() == 1:
 		_check(str(stored_levels[0].get("source", "")) == "player", "stored player level must keep player provenance")
