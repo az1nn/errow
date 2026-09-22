@@ -2,17 +2,28 @@
 
 A small arrow-clearing puzzle built with Godot for mobile and web.
 
-## MVP rule
+## Core rule
 
 Tap an arrow when its path to the edge of the 5×5 board is clear. If another arrow is anywhere in front of it, the move is blocked. Clear every arrow to finish the level.
 
-Arrows are rendered by a reusable vector `ArrowVisual` component, independent of Unicode glyph/font availability. Successful moves animate the arrow out of the board in its direction before puzzle state advances.
+Arrows are rendered by a reusable vector ArrowVisual component. Successful moves animate the arrow out of the board in its direction before puzzle state advances.
 
-The first playable slice contains three starter levels:
+## Levels
+
+Errow now has two explicit level sources:
+
+- **Original** — curated levels bundled with the game.
+- **Player** — levels created in-game and stored locally.
+
+The starter original set contains:
 
 1. **First Escape**
 2. **Queue**
 3. **Cross Traffic**
+
+The **Create** flow lets a player build a 5×5 puzzle by cycling cells through empty/up/right/down/left, save drafts locally, validate deadlocks and playtest solvable levels in the real gameplay runtime.
+
+Player drafts are persisted as JSON under Godot's writable user storage. Solvable drafts appear under **My levels**.
 
 ## Run locally
 
@@ -27,7 +38,8 @@ Main scene: `res://src/main.tscn`
 
 - Platform target: mobile + web.
 - Rendering: Godot compatibility renderer.
-- Current spec: `docs/SPEC-003-ESCAPE-ANIMATION.md`.
+- Current spec: `docs/SPEC-004-PLAYER-LEVELS.md`.
+- UGC research: `docs/UGC-RESEARCH.md`.
 - Continuation protocol: `.agents/skills/siga/`.
 
 ## CI/CD

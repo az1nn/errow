@@ -1,10 +1,24 @@
 extends SceneTree
 
+const LevelRulesScript = preload("res://src/levels/level_rules.gd")
+const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
+
 var failures := 0
+var finished := false
 
 
 func _initialize() -> void:
+	var watchdog := create_timer(8.0)
+	watchdog.timeout.connect(_on_watchdog_timeout)
 	call_deferred("_run")
+
+
+func _on_watchdog_timeout() -> void:
+	if finished:
+		return
+	failures += 1
+	push_error("Godot smoke tests timed out before completion.")
+	quit(1)
 
 
 func _run() -> void:
@@ -20,7 +34,42 @@ func _run() -> void:
 	await process_frame
 
 	_check(game != null, "main scene must instantiate")
+	_check(game.get("levels").size() == 3, "official catalog must expose three starter levels")
 	_check(game.get("active_arrows").size() == 6, "level 1 must start with 6 arrows")
+	_check(LevelRulesScript.is_solvable(game.get("levels")[0]), "official level 1 must be solvable")
+	_check(game.get_node_or_null("LevelCreator") != null, "main scene must include the player level creator")
+
+	var deadlocked_level := {
+		"schema_version": 1,
+		"board_size": 5,
+		"name": "Deadlock fixture",
+		"arrows": [
+			[1, 2, "R"],
+			[3, 2, "L"],
+		],
+	}
+	_check(LevelRulesScript.is_solvable(deadlocked_level) == false, "opposing arrows must be detected as a deadlock")
+
+	var test_store_path := "user://errow-smoke-community-levels.json"
+	var test_store: LocalLevelStore = LocalLevelStoreScript.new(test_store_path)
+	test_store.clear_levels()
+	var saved_result: Dictionary = test_store.upsert_level({
+		"schema_version": 1,
+		"board_size": 5,
+		"name": "Smoke player level",
+		"subtitle": "Round trip",
+		"arrows": [
+			[2, 0, "U"],
+			[2, 2, "U"],
+		],
+	})
+	_check(bool(saved_result.get("ok", false)), "player level store must save a valid level")
+	var stored_levels: Array = test_store.list_levels()
+	_check(stored_levels.size() == 1, "player level store must load the saved level")
+	if stored_levels.size() == 1:
+		_check(str(stored_levels[0].get("source", "")) == "player", "stored player level must keep player provenance")
+		_check(LevelRulesScript.is_solvable(stored_levels[0]), "stored player level must remain solvable after JSON round trip")
+	test_store.clear_levels()
 
 	var first_button: Button = game.get("arrow_buttons")[Vector2i(2, 0)]
 	var first_visual := first_button.get_node_or_null("ArrowVisual")
@@ -76,6 +125,7 @@ func _check(condition: bool, message: String) -> void:
 
 
 func _finish() -> void:
+	finished = true
 	if failures > 0:
 		push_error("Godot smoke tests failed: %d" % failures)
 		quit(1)

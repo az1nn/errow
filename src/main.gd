@@ -3,54 +3,14 @@ extends Control
 const GRID_SIZE := 5
 const ESCAPE_DURATION := 0.28
 
-const DIRECTIONS := {
-	"U": Vector2i(0, -1),
-	"R": Vector2i(1, 0),
-	"D": Vector2i(0, 1),
-	"L": Vector2i(-1, 0),
-}
+const LevelRulesScript = preload("res://src/levels/level_rules.gd")
+const LevelCatalogScript = preload("res://src/levels/level_catalog.gd")
+const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
+const LevelCreatorScript = preload("res://src/level_creator.gd")
 
-const LEVELS := [
-	{
-		"name": "First Escape",
-		"subtitle": "Clear the outside arrows, then free the center.",
-		"arrows": [
-			[2, 0, "U"],
-			[2, 2, "U"],
-			[0, 2, "L"],
-			[4, 2, "R"],
-			[1, 4, "D"],
-			[3, 4, "D"],
-		],
-	},
-	{
-		"name": "Queue",
-		"subtitle": "Arrows in the same lane have to leave in order.",
-		"arrows": [
-			[2, 0, "U"],
-			[2, 1, "U"],
-			[2, 2, "U"],
-			[0, 3, "L"],
-			[1, 3, "L"],
-			[4, 1, "R"],
-			[4, 4, "D"],
-		],
-	},
-	{
-		"name": "Cross Traffic",
-		"subtitle": "Open both lanes before releasing the deeper arrows.",
-		"arrows": [
-			[0, 2, "L"],
-			[1, 2, "L"],
-			[2, 2, "L"],
-			[2, 0, "U"],
-			[2, 1, "U"],
-			[2, 3, "U"],
-			[4, 0, "U"],
-			[4, 3, "R"],
-		],
-	},
-]
+var levels: Array = []
+var level_collection := "official"
+var local_level_store: LocalLevelStore
 
 var level_index := 0
 var moves := 0
@@ -70,9 +30,12 @@ var overlay: ColorRect
 var overlay_title: Label
 var overlay_copy: Label
 var overlay_button: Button
+var creator: LevelCreator
 
 
 func _ready() -> void:
+	local_level_store = LocalLevelStoreScript.new()
+	levels = LevelCatalogScript.official_levels()
 	_build_ui()
 	_load_level(0)
 
@@ -88,12 +51,12 @@ func _build_ui() -> void:
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 56)
 	margin.add_theme_constant_override("margin_right", 56)
-	margin.add_theme_constant_override("margin_top", 58)
-	margin.add_theme_constant_override("margin_bottom", 44)
+	margin.add_theme_constant_override("margin_top", 48)
+	margin.add_theme_constant_override("margin_bottom", 40)
 	add_child(margin)
 
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 24)
+	stack.add_theme_constant_override("separation", 18)
 	margin.add_child(stack)
 
 	var brand := Label.new()
@@ -113,14 +76,14 @@ func _build_ui() -> void:
 
 	level_label = Label.new()
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	level_label.add_theme_font_size_override("font_size", 38)
+	level_label.add_theme_font_size_override("font_size", 36)
 	level_label.add_theme_color_override("font_color", Color("#dff9ee"))
 	stack.add_child(level_label)
 
 	subtitle_label = Label.new()
 	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	subtitle_label.add_theme_font_size_override("font_size", 20)
+	subtitle_label.add_theme_font_size_override("font_size", 19)
 	subtitle_label.add_theme_color_override("font_color", Color("#8d98ab"))
 	stack.add_child(subtitle_label)
 
@@ -154,8 +117,8 @@ func _build_ui() -> void:
 	status_label.text = "Find a clear path."
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_label.custom_minimum_size = Vector2(0, 56)
-	status_label.add_theme_font_size_override("font_size", 21)
+	status_label.custom_minimum_size = Vector2(0, 48)
+	status_label.add_theme_font_size_override("font_size", 19)
 	status_label.add_theme_color_override("font_color", Color("#8d98ab"))
 	stack.add_child(status_label)
 
@@ -166,21 +129,53 @@ func _build_ui() -> void:
 
 	var restart := Button.new()
 	restart.text = "Restart level"
-	restart.custom_minimum_size = Vector2(250, 64)
+	restart.custom_minimum_size = Vector2(250, 60)
 	restart.focus_mode = Control.FOCUS_NONE
-	restart.add_theme_font_size_override("font_size", 20)
+	restart.add_theme_font_size_override("font_size", 19)
 	restart.pressed.connect(_restart_level)
 	_apply_action_style(restart)
 	actions.add_child(restart)
 
 	var skip := Button.new()
 	skip.text = "Next level"
-	skip.custom_minimum_size = Vector2(250, 64)
+	skip.custom_minimum_size = Vector2(250, 60)
 	skip.focus_mode = Control.FOCUS_NONE
-	skip.add_theme_font_size_override("font_size", 20)
+	skip.add_theme_font_size_override("font_size", 19)
 	skip.pressed.connect(_next_level)
 	_apply_action_style(skip)
 	actions.add_child(skip)
+
+	var library_actions := HBoxContainer.new()
+	library_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	library_actions.add_theme_constant_override("separation", 12)
+	stack.add_child(library_actions)
+
+	var original := Button.new()
+	original.text = "Original"
+	original.custom_minimum_size = Vector2(180, 56)
+	original.focus_mode = Control.FOCUS_NONE
+	original.add_theme_font_size_override("font_size", 18)
+	original.pressed.connect(_show_official_levels)
+	_apply_action_style(original)
+	library_actions.add_child(original)
+
+	var player_levels := Button.new()
+	player_levels.text = "My levels"
+	player_levels.custom_minimum_size = Vector2(180, 56)
+	player_levels.focus_mode = Control.FOCUS_NONE
+	player_levels.add_theme_font_size_override("font_size", 18)
+	player_levels.pressed.connect(_show_player_levels)
+	_apply_action_style(player_levels)
+	library_actions.add_child(player_levels)
+
+	var create_level := Button.new()
+	create_level.text = "Create"
+	create_level.custom_minimum_size = Vector2(180, 56)
+	create_level.focus_mode = Control.FOCUS_NONE
+	create_level.add_theme_font_size_override("font_size", 18)
+	create_level.pressed.connect(_open_creator)
+	_apply_action_style(create_level)
+	library_actions.add_child(create_level)
 
 	escape_layer = Control.new()
 	escape_layer.name = "EscapeLayer"
@@ -240,22 +235,71 @@ func _build_ui() -> void:
 	_apply_action_style(overlay_button)
 	overlay_stack.add_child(overlay_button)
 
+	creator = LevelCreatorScript.new()
+	creator.connect("playtest_requested", Callable(self, "_on_creator_playtest_requested"))
+	add_child(creator)
+
+
+func _set_level_collection(new_levels: Array, collection: String) -> void:
+	if new_levels.is_empty():
+		return
+
+	levels = new_levels.duplicate(true)
+	level_collection = collection
+	_load_level(0)
+
+
+func _show_official_levels() -> void:
+	_set_level_collection(LevelCatalogScript.official_levels(), "official")
+
+
+func _show_player_levels() -> void:
+	var saved_levels: Array = local_level_store.list_levels()
+	var playable_levels: Array = []
+	for level in saved_levels:
+		if LevelRulesScript.is_solvable(level):
+			playable_levels.append(level)
+
+	if playable_levels.is_empty():
+		overlay.visible = false
+		status_label.text = "No playable player levels yet. Create and playtest one first."
+		return
+
+	_set_level_collection(playable_levels, "player")
+
+
+func _open_creator() -> void:
+	overlay.visible = false
+	creator.call("open_creator")
+
+
+func _on_creator_playtest_requested(level: Dictionary) -> void:
+	_set_level_collection([level], "player")
+
 
 func _load_level(index: int) -> void:
+	if levels.is_empty():
+		return
+
 	_cancel_escape_animation()
-	level_index = clampi(index, 0, LEVELS.size() - 1)
+	level_index = clampi(index, 0, levels.size() - 1)
 	moves = 0
 	active_arrows.clear()
 	arrow_buttons.clear()
 	overlay.visible = false
 
-	var level: Dictionary = LEVELS[level_index]
+	var level: Dictionary = levels[level_index]
 	for item in level["arrows"]:
 		var cell := Vector2i(int(item[0]), int(item[1]))
 		active_arrows[cell] = str(item[2])
 
-	level_label.text = "Level %d · %s" % [level_index + 1, level["name"]]
-	subtitle_label.text = str(level["subtitle"])
+	var collection_label := "Original" if level_collection == "official" else "Player"
+	level_label.text = "%s %d · %s" % [
+		collection_label,
+		level_index + 1,
+		str(level.get("name", "Untitled level")),
+	]
+	subtitle_label.text = str(level.get("subtitle", ""))
 	status_label.text = "Find a clear path."
 	_rebuild_board()
 	_update_stats()
@@ -340,7 +384,7 @@ func _finish_escape(cell: Vector2i, button: Button) -> void:
 func _cancel_escape_animation() -> void:
 	if escape_tween != null:
 		escape_tween.kill()
-		escape_tween = null
+	escape_tween = null
 
 	is_animating_escape = false
 	if escape_layer == null:
@@ -351,7 +395,7 @@ func _cancel_escape_animation() -> void:
 
 
 func _escape_target_position(button: Control, direction_code: String) -> Vector2:
-	var direction := Vector2(DIRECTIONS[direction_code])
+	var direction := Vector2(LevelRulesScript.DIRECTIONS[direction_code])
 	return button.global_position + direction * _escape_distance(button)
 
 
@@ -371,31 +415,30 @@ func _remove_arrow(cell: Vector2i) -> void:
 
 
 func _can_exit(cell: Vector2i, direction_code: String) -> bool:
-	var direction: Vector2i = DIRECTIONS[direction_code]
-	var cursor := cell + direction
-
-	while _inside_grid(cursor):
-		if active_arrows.has(cursor):
-			return false
-		cursor += direction
-
-	return true
-
-
-func _inside_grid(cell: Vector2i) -> bool:
-	return (
-		cell.x >= 0
-		and cell.y >= 0
-		and cell.x < GRID_SIZE
-		and cell.y < GRID_SIZE
-	)
+	return LevelRulesScript.can_exit(active_arrows, cell, direction_code, GRID_SIZE)
 
 
 func _show_complete() -> void:
 	overlay.visible = true
-	if level_index == LEVELS.size() - 1:
+
+	if level_collection == "player":
+		if levels.size() == 1:
+			overlay_title.text = "Player level cleared"
+			overlay_copy.text = "Solved in %d successful moves. Your level uses the same runtime as the originals." % moves
+			overlay_button.text = "Replay level"
+		elif level_index == levels.size() - 1:
+			overlay_title.text = "Player set cleared"
+			overlay_copy.text = "You cleared all saved player levels."
+			overlay_button.text = "Replay player levels"
+		else:
+			overlay_title.text = "Player level cleared"
+			overlay_copy.text = "Solved in %d successful moves. Ready for the next player level?" % moves
+			overlay_button.text = "Next player level"
+		return
+
+	if level_index == levels.size() - 1:
 		overlay_title.text = "Starter set cleared"
-		overlay_copy.text = "You cleared all three MVP levels in %d successful moves." % moves
+		overlay_copy.text = "You cleared all three original levels in %d successful moves." % moves
 		overlay_button.text = "Replay from level 1"
 	else:
 		overlay_title.text = "Level cleared"
@@ -408,7 +451,10 @@ func _restart_level() -> void:
 
 
 func _next_level() -> void:
-	if level_index >= LEVELS.size() - 1:
+	if levels.is_empty():
+		return
+
+	if level_index >= levels.size() - 1:
 		_load_level(0)
 	else:
 		_load_level(level_index + 1)
