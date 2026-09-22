@@ -1,36 +1,41 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: SPEC-003 — Escape Animation
+WORKSTREAM: SPEC-004 — Player-created levels
 STATE: COMPLETE; merged to master and deployed to GitHub Pages
 MODE: ADVANCE
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-003-ESCAPE-ANIMATION.md
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-004-PLAYER-LEVELS.md + docs/UGC-RESEARCH.md
 
-CURRENT VERSION / HEAD: resolve live master HEAD during VERIFY-FIRST; gameplay merge commit is d4826e3654ce3d7468b8bab2b7141aa828dc1e92
+CURRENT VERSION / HEAD: resolve live master HEAD during VERIFY-FIRST; SPEC-004 gameplay merge commit is 44bc7e37ad423fea38f333b3a62fdd410861577d
 BASE: master
 BRANCH / ENV: master / GitHub Pages
-PR / MR / TASK: PR #4 — MERGED
-SPEC / ADR: SPEC-003-ESCAPE-ANIMATION
+PR / MR / TASK: PR #5 — MERGED
+SPEC / ADR: SPEC-004-PLAYER-LEVELS + UGC-RESEARCH
 
 DONE:
-- Added directional movement/escape animation for successful arrows.
-- The real arrow button moves in U/R/D/L direction and fades before puzzle state removal.
-- Successful arrow interactions are serialized while an escape tween is active.
-- Restart/level changes cancel the tween and clear escaping visuals, preventing stale callbacks from mutating a newly loaded board.
-- Headless smoke coverage verifies computed escape direction, deferred removal and restart cancellation.
-- PR #4 merged automatically under the repository-local authorization at exact HEAD 83347b743f30f65c2a67e531d27a3d997dca4fd5.
-- Merge commit: d4826e3654ce3d7468b8bab2b7141aa828dc1e92.
+- Researched player-created-level patterns from Super Mario Maker 2, Portal 2 and Trackmania.
+- Extracted original levels into a versioned data-backed LevelCatalog.
+- Added shared LevelRules validation, can-exit logic and deterministic deadlock/solvability detection.
+- Added LocalLevelStore JSON persistence under Godot user://.
+- Added the in-game 5x5 LevelCreator with direction cycling, local draft save/load, validation status and playtest.
+- Added Original / My levels / Create navigation.
+- Solvable player levels use the exact same gameplay runtime and escape animation as original levels.
+- Added constrained schema-v1 trust boundary: player levels are data only, never executable GDScript/scenes/resources.
+- Added smoke coverage for catalog integrity, deadlock detection, JSON persistence and existing gameplay behavior.
+- Added a smoke-test watchdog so runtime aborts fail deterministically instead of hanging CI.
+- PR #5 merged at exact verified HEAD 2b75a1289d319c7004e5030f114d2bb0bdf28f32.
+- Merge commit: 44bc7e37ad423fea38f333b3a62fdd410861577d.
 
 VERIFY:
-- Initial PR run 35724395316 exposed one frame-timing-sensitive smoke assertion; implementation state transitions passed and the flaky assertion was replaced by deterministic escape-target verification.
-- Exact PR HEAD Godot CI/CD run 35724580694: SUCCESS.
-- Exact PR HEAD import/parse, headless smoke tests and Web export: SUCCESS.
-- Post-merge master Godot CI/CD run 35724771153: SUCCESS.
-- Post-merge Web build, Pages artifact upload and GitHub Pages deploy: SUCCESS.
-- Human visual/device/gameplay testing remains asynchronous and non-blocking by default.
+- First SPEC-004 CI attempt exposed GDScript 4.7 static inference ambiguity in Variant-backed lookups; explicit typing fixed it without weakening validation.
+- Exact PR HEAD Godot CI/CD run 35725847285: SUCCESS.
+- Exact PR HEAD import/parse, headless smoke tests, Web export and build upload: SUCCESS.
+- Post-merge master Godot CI/CD run 35726042263: SUCCESS.
+- Post-merge Web build, Pages artifact upload and GitHub Pages deployment: SUCCESS.
+- Human visual/browser/mobile validation remains asynchronous and non-blocking by default.
 
 GATES:
-- No active gate for SPEC-003.
+- No active gate for SPEC-004.
 - No explicit human gate.
 - Automatic merge authorization remains active under SKILL.md conditions.
 
@@ -41,16 +46,19 @@ INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
 - VERIFY-FIRST on every standalone Siga.
 - No parallel canonical SIGA state outside this repository.
-- Do not invent implicit human gates.
+- Original and Player remain explicit separate level sources.
+- Community content stays constrained to versioned data; never load submitted executable resources.
 - Human findings are follow-up evidence, not a default blocker.
 
 NEXT:
-- ADVANCE to the next independent gameplay increment: extract level data from src/main.gd into a dedicated level-data source before adding more boards.
-- Preserve the existing three levels, rules, animation behavior and CI contract.
-- Keep haptics optional/capability-gated unless a later spec explicitly promotes them.
+- ADVANCE to the networked community increment: CommunityLevelProvider behind the existing level-schema boundary.
+- Add publish/download APIs with server-side revalidation and immutable published revisions.
+- Add Community discovery surfaces such as New, Popular/Trending, Curated and search by level/creator ID.
+- Add account identity, plays/likes and report/takedown state outside the level schema.
+- Preserve local drafts and offline play as first-class behavior.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Resolve live master HEAD and inspect workflows/jobs created after this handoff.
-3. Confirm no open PR/workstream or failing deployment supersedes this state.
-4. If master is green and idle, remain ADVANCE and create the level-data extraction workstream.
+2. Resolve live master HEAD, open PRs and Actions runs newer than this handoff.
+3. Confirm master/Pages remain green and no active workstream supersedes SPEC-004.
+4. If green and idle, remain ADVANCE and start the CommunityLevelProvider/discovery workstream.
