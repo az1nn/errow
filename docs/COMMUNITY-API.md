@@ -12,13 +12,15 @@ Production Web deployments require HTTPS.
 
 ## Authentication
 
-Anonymous discovery may be supported.
+Anonymous discovery is supported by the current service.
 
 Authenticated operations use:
 
 `Authorization: Bearer <token>`
 
-The service defines token issuance. Tokens are not persisted inside level data.
+Local development may map opaque tokens to creator IDs through `ERROW_AUTH_TOKENS`.
+
+The production profile validates RS256 JWTs from a configured external OIDC issuer. The token `sub` becomes the canonical creator ID after issuer, audience, signature, expiry and not-before validation. Identity-token issuance remains the responsibility of the configured identity provider; tokens are never persisted inside level data.
 
 ## GET /v1/levels?feed={feed}
 
@@ -116,7 +118,7 @@ Request:
 
 The server MUST NOT trust client validation.
 
-Before publication it repeats the structural and solvability invariants, assigns a canonical public_id and creates an immutable positive revision.
+Before publication it repeats the structural and solvability invariants, assigns a canonical public ID and creates an immutable positive revision. In the PostgreSQL profile, publication of a creator/client-level stream is transactional and serializes revision allocation.
 
 Response uses the same `entry` envelope as the download endpoint.
 
