@@ -2,43 +2,50 @@ CAVEMAN HANDOFF v1
 
 APP: Errow
 WORKSTREAM: SPEC-006 — Community service core
-STATE: IMPLEMENTED on feature branch; local Node verification green; GitHub PR/CI pending
-MODE: RESUME
+STATE: MERGED; exact PR HEAD and post-merge master/Pages gates verified green
+MODE: ADVANCE
 CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-006-COMMUNITY-SERVICE-CORE.md + docs/COMMUNITY-API.md
 
-CURRENT VERSION / HEAD: feat/006-community-service-core; resolve live HEAD during VERIFY-FIRST
-BASE: master @ df84bf50ff66090e50dfce13f253746cd6e5e400
-BRANCH / ENV: feat/006-community-service-core / PR validation
-PR / MR / TASK: create PR to master and validate exact HEAD
+CURRENT VERSION / HEAD: master; SPEC-006 merge commit 05749410b44f7a6068e87a369aecb5cf0710c3f0; resolve live HEAD during VERIFY-FIRST
+BASE: master
+BRANCH / ENV: master / GitHub Pages + provider-neutral Node community service source
+PR / MR / TASK: PR #7 — MERGED
 SPEC / ADR: SPEC-006-COMMUNITY-SERVICE-CORE
 
 DONE:
-- Reconciled SPEC-005 post-merge workflow and GitHub Pages deployment: run 35850518621 succeeded on master HEAD df84bf50ff66090e50dfce13f253746cd6e5e400.
-- Added provider-neutral Node.js 22 community service core.
+- Reconciled and closed the SPEC-005 post-merge deployment gate before starting this workstream.
+- Added provider-neutral Node.js 22 community service core under service/.
 - Implemented authenticated publication through deployment-configured bearer-token mapping.
 - Ported 5x5 structural and deterministic solvability validation to the server.
 - Added sanitization so client-only id/source fields never enter published revision payloads.
 - Added canonical public IDs and immutable revision sequencing scoped by creator + client_level_id.
 - Added atomic JSON-file persistence with mutable stats/moderation state separated from revision payloads.
-- Added New/Popular/Trending/Curated read feeds and immutable revision reads.
-- Added Node tests for auth, validation, deadlock rejection, revision immutability, feeds and persistence.
+- Added New/Popular/Trending/Curated feed reads and immutable revision reads.
+- Added tests for auth, validation, deadlock rejection, revision immutability, feeds and persistence.
 - Extended repository CI so service tests run against the exact source SHA alongside Godot validation.
-- Kept the existing Godot Pages deployment path; deploy now also depends on the service test job.
+- PR #7 merged under standing authorization with expected_head_sha 9556e37546bae3ec4634dca5a222b893e3cc7575.
+- Merge commit: 05749410b44f7a6068e87a369aecb5cf0710c3f0.
 
 VERIFY:
-- Local Node 22 test suite: 6 tests passed, 0 failed.
-- SPEC-005 post-merge master run 35850518621: Community predecessor Godot pipeline and Deploy Web to GitHub Pages were SUCCESS before this workstream started.
-- Exact feature HEAD GitHub Actions validation is still pending.
+- Local Node 22 suite before push: 6 passed, 0 failed.
+- PR run 35851204809 on exact HEAD 9556e37546bae3ec4634dca5a222b893e3cc7575: SUCCESS.
+- PR Community service tests: SUCCESS.
+- PR Godot import/parse, headless smoke and Web export: SUCCESS.
+- PR had no reviews, unresolved threads or comments/blockers immediately before merge.
+- Post-merge master run 35851317284 on 05749410b44f7a6068e87a369aecb5cf0710c3f0: SUCCESS.
+- Post-merge Community service tests: SUCCESS.
+- Post-merge Godot validate/export: SUCCESS.
+- Post-merge Deploy Web to GitHub Pages: SUCCESS.
 
 GATES:
-- Blocking: exact feature HEAD GitHub Actions must pass both Community service tests and Godot validate/export.
+- SPEC-006 technical gates: GREEN.
 - No explicit human gate.
-- Automatic merge authorization remains active under SKILL.md conditions.
+- This handoff-closing commit may itself trigger the normal master workflow; VERIFY-FIRST must reconcile that latest master run before starting the next workstream.
 
 BLOCKERS:
 - No code blocker known.
-- This increment does not choose or provision a production hosting provider.
-- The JSON adapter is single-process durable storage; multiple replicas require a shared transactional database adapter.
+- Production hosting provider/database is not selected or provisioned.
+- The JSON adapter is single-process durable storage; multiple replicas require shared transactional persistence.
 - Public identity issuance, plays/likes mutation, reports and moderation mutation endpoints remain follow-up work.
 
 INVARIANTS:
@@ -53,17 +60,15 @@ INVARIANTS:
 - Do not claim deployment success without direct evidence.
 
 NEXT:
-- Create the SPEC-006 PR.
-- Validate the exact PR HEAD through the expanded GitHub Actions workflow.
-- Fix any Node/Godot/Pages pipeline regression without weakening invariants.
-- If exact-head gates are green and the PR is mergeable, merge automatically with expected_head_sha.
-- Reconcile master and GitHub Pages after merge.
-- Then ADVANCE to production hosting/database + identity, followed by plays/likes and report/takedown mutation APIs.
+- After reconciling the latest master workflow triggered by this closure commit, keep MODE=ADVANCE if green.
+- Next logical workstream: production community service deployment architecture — shared transactional database + real identity/token issuance + hosting target.
+- Then implement plays/likes mutation and report/takedown administration without mutating immutable revision payloads.
+- Preserve the existing client API boundary and offline behavior.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Resolve live feat/006-community-service-core HEAD and PR state.
-3. Inspect exact-head GitHub Actions jobs for Community service tests and Godot validate/export.
-4. If CI is active, WATCH without duplicating work.
-5. If any job failed, RESUME at the failing gate and fix it.
-6. If all exact-head gates are green and the PR is mergeable/non-draft with no blocking review, merge under the standing authorization and reconcile master/Pages.
+2. Resolve live master HEAD and latest master GitHub Actions run.
+3. If the closure workflow is active, WATCH.
+4. If it failed, RESUME and fix the failing gate.
+5. If it is green, remain ADVANCE.
+6. Before provisioning production infrastructure, derive the next spec from the deployment/database/identity requirements and stop only if an explicit cost/provider human gate is required.
