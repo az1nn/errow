@@ -7,12 +7,14 @@ const LevelRulesScript = preload("res://src/levels/level_rules.gd")
 const LevelCatalogScript = preload("res://src/levels/level_catalog.gd")
 const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
 const CommunityLevelProviderScript = preload("res://src/community/community_level_provider.gd")
+const CommunityAuthSessionScript = preload("res://src/community/community_auth_session.gd")
 const LevelCreatorScript = preload("res://src/level_creator.gd")
 
 var levels: Array = []
 var level_collection := "official"
 var local_level_store: LocalLevelStore
 var community_level_provider: CommunityLevelProvider
+var community_auth_session: CommunityAuthSession
 
 var level_index := 0
 var moves := 0
@@ -26,6 +28,12 @@ var subtitle_label: Label
 var remaining_label: Label
 var moves_label: Label
 var status_label: Label
+var community_actions: HBoxContainer
+var community_auth_hint: Label
+var community_report_reason: OptionButton
+var community_like_button: Button
+var community_unlike_button: Button
+var community_report_button: Button
 var grid: GridContainer
 var escape_layer: Control
 var overlay: ColorRect
@@ -37,11 +45,16 @@ var creator: LevelCreator
 
 func _ready() -> void:
 	local_level_store = LocalLevelStoreScript.new()
+	community_auth_session = CommunityAuthSessionScript.new()
+	community_auth_session.configure_from_environment()
 
 	var community_api_url := str(ProjectSettings.get_setting("errow/community_api_base_url", ""))
 	community_level_provider = CommunityLevelProviderScript.new(community_api_url)
 	community_level_provider.name = "CommunityLevelProvider"
+	community_level_provider.set_auth_token(community_auth_session.bearer_token())
 	community_level_provider.feed_loaded.connect(_on_community_feed_loaded)
+	community_level_provider.engagement_updated.connect(_on_community_engagement_updated)
+	community_level_provider.report_submitted.connect(_on_community_report_submitted)
 	community_level_provider.request_failed.connect(_on_community_request_failed)
 	add_child(community_level_provider)
 
@@ -196,6 +209,54 @@ func _build_ui() -> void:
 	_apply_action_style(create_level)
 	library_actions.add_child(create_level)
 
+	community_auth_hint = Label.new()
+	community_auth_hint.text = "Authenticated Community actions are unavailable in anonymous mode."
+	community_auth_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	community_auth_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	community_auth_hint.add_theme_font_size_override("font_size", 16)
+	community_auth_hint.add_theme_color_override("font_color", Color("#7f8a9d"))
+	community_auth_hint.visible = false
+	stack.add_child(community_auth_hint)
+
+	community_actions = HBoxContainer.new()
+	community_actions.name = "CommunityActions"
+	community_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	community_actions.add_theme_constant_override("separation", 10)
+	community_actions.visible = false
+	stack.add_child(community_actions)
+
+	community_like_button = Button.new()
+	community_like_button.text = "Like"
+	community_like_button.custom_minimum_size = Vector2(120, 52)
+	community_like_button.focus_mode = Control.FOCUS_NONE
+	community_like_button.pressed.connect(_set_current_community_like.bind(true))
+	_apply_action_style(community_like_button)
+	community_actions.add_child(community_like_button)
+
+	community_unlike_button = Button.new()
+	community_unlike_button.text = "Unlike"
+	community_unlike_button.custom_minimum_size = Vector2(120, 52)
+	community_unlike_button.focus_mode = Control.FOCUS_NONE
+	community_unlike_button.pressed.connect(_set_current_community_like.bind(false))
+	_apply_action_style(community_unlike_button)
+	community_actions.add_child(community_unlike_button)
+
+	community_report_reason = OptionButton.new()
+	community_report_reason.custom_minimum_size = Vector2(170, 52)
+	for reason in CommunityLevelProviderScript.ALLOWED_REPORT_REASONS:
+		var reason_index := community_report_reason.item_count
+		community_report_reason.add_item(str(reason).capitalize())
+		community_report_reason.set_item_metadata(reason_index, str(reason))
+	community_actions.add_child(community_report_reason)
+
+	community_report_button = Button.new()
+	community_report_button.text = "Report"
+	community_report_button.custom_minimum_size = Vector2(130, 52)
+	community_report_button.focus_mode = Control.FOCUS_NONE
+	community_report_button.pressed.connect(_report_current_community)
+	_apply_action_style(community_report_button)
+	community_actions.add_child(community_report_button)
+
 	escape_layer = Control.new()
 	escape_layer.name = "EscapeLayer"
 	escape_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -316,7 +377,81 @@ func _on_community_feed_loaded(entries: Array) -> void:
 
 func _on_community_request_failed(message: String) -> void:
 	overlay.visible = false
+	_set_community_actions_enabled(true)
 	status_label.text = message
+
+
+func _current_community_public_id() -> String:
+	if level_collection != "community" or levels.is_empty():
+		return ""
+	var current_level: Dictionary = levels[level_index]
+	return str(current_level.get("_community_public_id", "")).strip_edges()
+
+
+func _set_current_community_like(liked: bool) -> void:
+	if community_auth_session == null or not community_auth_session.is_authenticated():
+		status_label.text = "Authentication is required for Community likes."
+		return
+	var public_id := _current_community_public_id()
+	if public_id.is_empty():
+		return
+	_set_community_actions_enabled(false)
+	status_label.text = "Updating Community like..."
+	if not community_level_provider.set_like(public_id, liked):
+		_set_community_actions_enabled(true)
+
+
+func _report_current_community() -> void:
+	if community_auth_session == null or not community_auth_session.is_authenticated():
+		status_label.text = "Authentication is required to report Community levels."
+		return
+	var public_id := _current_community_public_id()
+	if public_id.is_empty() or community_report_reason == null:
+		return
+	var selected_index := community_report_reason.selected
+	var reason := str(community_report_reason.get_item_metadata(selected_index))
+	_set_community_actions_enabled(false)
+	status_label.text = "Submitting Community report..."
+	if not community_level_provider.report_level(public_id, reason):
+		_set_community_actions_enabled(true)
+
+
+func _on_community_engagement_updated(operation: String, public_id: String, stats: Dictionary) -> void:
+	if operation != "like":
+		return
+	_set_community_actions_enabled(true)
+	if public_id != _current_community_public_id():
+		return
+	var liked := bool(stats.get("liked", false))
+	var likes := maxi(0, int(stats.get("likes", 0)))
+	status_label.text = "Community like %s · %d likes." % ["saved" if liked else "cleared", likes]
+
+
+func _on_community_report_submitted(public_id: String) -> void:
+	_set_community_actions_enabled(true)
+	if public_id == _current_community_public_id():
+		status_label.text = "Report submitted for moderator review."
+
+
+func _set_community_actions_enabled(enabled: bool) -> void:
+	if community_like_button != null:
+		community_like_button.disabled = not enabled
+	if community_unlike_button != null:
+		community_unlike_button.disabled = not enabled
+	if community_report_reason != null:
+		community_report_reason.disabled = not enabled
+	if community_report_button != null:
+		community_report_button.disabled = not enabled
+
+
+func _refresh_community_actions() -> void:
+	if community_actions == null or community_auth_hint == null:
+		return
+	var is_community := level_collection == "community"
+	var authenticated := community_auth_session != null and community_auth_session.is_authenticated()
+	community_actions.visible = is_community and authenticated
+	community_auth_hint.visible = is_community and not authenticated
+	_set_community_actions_enabled(true)
 
 
 func _open_creator() -> void:
@@ -362,6 +497,7 @@ func _load_level(index: int) -> void:
 	status_label.text = "Find a clear path."
 	_rebuild_board()
 	_update_stats()
+	_refresh_community_actions()
 
 
 func _rebuild_board() -> void:
