@@ -35,12 +35,18 @@ npm --prefix service start
 
 The OIDC subject (`sub`) becomes the canonical creator ID. Production tokens must be RS256-signed and satisfy issuer, audience, expiry and not-before validation.
 
+Moderator mutations additionally require `ERROW_MODERATOR_IDS`, a comma-separated set of authenticated subject IDs allowed to curate or take down Community levels.
+
 ## Current endpoints
 
 - `GET /healthz`
 - `GET /v1/levels?feed=new|popular|trending|curated`
 - `GET /v1/levels/{public_id}/revisions/{revision}`
 - `POST /v1/levels`
+- `POST /v1/levels/{public_id}/plays`
+- `PUT /v1/levels/{public_id}/like`
+- `POST /v1/levels/{public_id}/reports`
+- `PATCH /v1/moderation/levels/{public_id}`
 
 ## Invariants
 
