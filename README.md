@@ -26,7 +26,7 @@ The **Create** flow lets a player build a 5×5 puzzle by cycling cells through e
 
 Player drafts are persisted as JSON under Godot's writable user storage. Solvable drafts appear under **My levels**.
 
-The **Community** entry point loads the `New` feed from `CommunityLevelProvider` when a service URL is configured. Remote entries are revalidated client-side and converted back into the same schema-v1 gameplay data used by Original and Player levels. An unconfigured service is non-fatal; local/offline play remains available.
+The **Community** entry point loads the `New` feed from `CommunityLevelProvider` when a service URL is configured. Completed Community puzzles now record play engagement through the same constrained provider boundary; like/report transport is available for the future authenticated UX. Remote entries are revalidated client-side and converted back into the same schema-v1 gameplay data used by Original and Player levels. An unconfigured service is non-fatal; local/offline play remains available.
 
 ## Run locally
 
@@ -56,7 +56,7 @@ See `service/README.md` and `docs/COMMUNITY-API.md`.
 
 - Platform target: mobile + web.
 - Rendering: Godot compatibility renderer.
-- Current spec: `docs/SPEC-007-PRODUCTION-COMMUNITY-FOUNDATION.md`.
+- Current spec: `docs/SPEC-008-COMMUNITY-ENGAGEMENT-MODERATION.md`.
 - Community API contract: `docs/COMMUNITY-API.md`.
 - UGC research: `docs/UGC-RESEARCH.md`.
 - Continuation protocol: `.agents/skills/siga/`.
