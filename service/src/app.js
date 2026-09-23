@@ -1,9 +1,12 @@
+import { createStaticAuthenticator } from "./auth.js";
 import { isSolvable, sanitizeLevel, validateLevel } from "./level-rules.js";
 
 const FEEDS = new Set(["new", "popular", "trending", "curated"]);
 const MAX_BODY_BYTES = 64 * 1024;
 
-export function createApp({ store, authTokens = new Map(), allowedOrigin = "*" }) {
+export function createApp({ store, authenticateRequest, authTokens = new Map(), allowedOrigin = "*" }) {
+  const authenticate = authenticateRequest ?? createStaticAuthenticator(authTokens);
+
   return async function handler(req, res) {
     applyCors(res, allowedOrigin);
 
@@ -32,7 +35,7 @@ export function createApp({ store, authTokens = new Map(), allowedOrigin = "*" }
       }
 
       if (req.method === "POST" && url.pathname === "/v1/levels") {
-        const creatorId = authenticate(req, authTokens);
+        const creatorId = await authenticate(req);
         if (!creatorId) return error(res, 401, "unauthorized", "A valid bearer token is required.");
 
         const body = await readJson(req);
@@ -63,19 +66,6 @@ export function createApp({ store, authTokens = new Map(), allowedOrigin = "*" }
       return error(res, 500, "internal_error", "Unexpected service error.");
     }
   };
-}
-
-export function parseAuthTokens(raw) {
-  if (!raw) return new Map();
-  const value = JSON.parse(raw);
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("ERROW_AUTH_TOKENS must be a JSON object.");
-  return new Map(Object.entries(value).filter(([token, creatorId]) => token && typeof creatorId === "string" && creatorId));
-}
-
-function authenticate(req, authTokens) {
-  const header = req.headers.authorization ?? "";
-  const match = header.match(/^Bearer\s+(.+)$/i);
-  return match ? authTokens.get(match[1]) ?? null : null;
 }
 
 async function readJson(req) {
