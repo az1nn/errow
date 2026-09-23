@@ -6,11 +6,13 @@ const ESCAPE_DURATION := 0.28
 const LevelRulesScript = preload("res://src/levels/level_rules.gd")
 const LevelCatalogScript = preload("res://src/levels/level_catalog.gd")
 const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
+const CommunityLevelProviderScript = preload("res://src/community/community_level_provider.gd")
 const LevelCreatorScript = preload("res://src/level_creator.gd")
 
 var levels: Array = []
 var level_collection := "official"
 var local_level_store: LocalLevelStore
+var community_level_provider: CommunityLevelProvider
 
 var level_index := 0
 var moves := 0
@@ -35,6 +37,14 @@ var creator: LevelCreator
 
 func _ready() -> void:
 	local_level_store = LocalLevelStoreScript.new()
+
+	var community_api_url := str(ProjectSettings.get_setting("errow/community_api_base_url", ""))
+	community_level_provider = CommunityLevelProviderScript.new(community_api_url)
+	community_level_provider.name = "CommunityLevelProvider"
+	community_level_provider.feed_loaded.connect(_on_community_feed_loaded)
+	community_level_provider.request_failed.connect(_on_community_request_failed)
+	add_child(community_level_provider)
+
 	levels = LevelCatalogScript.official_levels()
 	_build_ui()
 	_load_level(0)
@@ -152,7 +162,7 @@ func _build_ui() -> void:
 
 	var original := Button.new()
 	original.text = "Original"
-	original.custom_minimum_size = Vector2(180, 56)
+	original.custom_minimum_size = Vector2(150, 56)
 	original.focus_mode = Control.FOCUS_NONE
 	original.add_theme_font_size_override("font_size", 18)
 	original.pressed.connect(_show_official_levels)
@@ -161,16 +171,25 @@ func _build_ui() -> void:
 
 	var player_levels := Button.new()
 	player_levels.text = "My levels"
-	player_levels.custom_minimum_size = Vector2(180, 56)
+	player_levels.custom_minimum_size = Vector2(150, 56)
 	player_levels.focus_mode = Control.FOCUS_NONE
 	player_levels.add_theme_font_size_override("font_size", 18)
 	player_levels.pressed.connect(_show_player_levels)
 	_apply_action_style(player_levels)
 	library_actions.add_child(player_levels)
 
+	var community := Button.new()
+	community.text = "Community"
+	community.custom_minimum_size = Vector2(150, 56)
+	community.focus_mode = Control.FOCUS_NONE
+	community.add_theme_font_size_override("font_size", 18)
+	community.pressed.connect(_show_community_levels)
+	_apply_action_style(community)
+	library_actions.add_child(community)
+
 	var create_level := Button.new()
 	create_level.text = "Create"
-	create_level.custom_minimum_size = Vector2(180, 56)
+	create_level.custom_minimum_size = Vector2(150, 56)
 	create_level.focus_mode = Control.FOCUS_NONE
 	create_level.add_theme_font_size_override("font_size", 18)
 	create_level.pressed.connect(_open_creator)
@@ -268,6 +287,35 @@ func _show_player_levels() -> void:
 	_set_level_collection(playable_levels, "player")
 
 
+func _show_community_levels() -> void:
+	overlay.visible = false
+	status_label.text = "Loading Community · New..."
+	community_level_provider.fetch_feed("new")
+
+
+func _on_community_feed_loaded(entries: Array) -> void:
+	var community_levels: Array = []
+	for entry_variant in entries:
+		if typeof(entry_variant) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_variant
+		var level_variant = entry.get("level", {})
+		if typeof(level_variant) != TYPE_DICTIONARY:
+			continue
+		community_levels.append(level_variant)
+
+	if community_levels.is_empty():
+		status_label.text = "Community feed is online, but no playable levels were returned."
+		return
+
+	_set_level_collection(community_levels, "community")
+
+
+func _on_community_request_failed(message: String) -> void:
+	overlay.visible = false
+	status_label.text = message
+
+
 func _open_creator() -> void:
 	overlay.visible = false
 	creator.call("open_creator")
@@ -293,7 +341,15 @@ func _load_level(index: int) -> void:
 		var cell := Vector2i(int(item[0]), int(item[1]))
 		active_arrows[cell] = str(item[2])
 
-	var collection_label := "Original" if level_collection == "official" else "Player"
+	var collection_label := "Level"
+	match level_collection:
+		"official":
+			collection_label = "Original"
+		"player":
+			collection_label = "Player"
+		"community":
+			collection_label = "Community"
+
 	level_label.text = "%s %d · %s" % [
 		collection_label,
 		level_index + 1,
@@ -420,6 +476,21 @@ func _can_exit(cell: Vector2i, direction_code: String) -> bool:
 
 func _show_complete() -> void:
 	overlay.visible = true
+
+	if level_collection == "community":
+		if levels.size() == 1:
+			overlay_title.text = "Community level cleared"
+			overlay_copy.text = "Solved in %d successful moves." % moves
+			overlay_button.text = "Replay level"
+		elif level_index == levels.size() - 1:
+			overlay_title.text = "Community set cleared"
+			overlay_copy.text = "You cleared every level in this Community feed."
+			overlay_button.text = "Replay Community"
+		else:
+			overlay_title.text = "Community level cleared"
+			overlay_copy.text = "Solved in %d successful moves. Ready for the next Community level?" % moves
+			overlay_button.text = "Next Community level"
+		return
 
 	if level_collection == "player":
 		if levels.size() == 1:
