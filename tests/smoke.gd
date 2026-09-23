@@ -41,6 +41,11 @@ func _run() -> void:
 	_check(LevelRulesScript.is_solvable(game.get("levels")[0]), "official level 1 must be solvable")
 	_check(game.get_node_or_null("LevelCreator") != null, "main scene must include the player level creator")
 	_check(game.get_node_or_null("CommunityLevelProvider") != null, "main scene must include the community provider boundary")
+	_check(game.get("community_feed_actions") != null, "main scene must expose Community feed discovery controls")
+	_check(game.get("community_feed_actions").visible == false, "Community feed controls must start hidden outside Community browsing")
+	_check(game.get("community_feed_buttons").size() == CommunityLevelProviderScript.ALLOWED_FEEDS.size(), "Community feed controls must cover every provider-supported feed")
+	for feed_name in ["new", "popular", "trending", "curated"]:
+		_check(CommunityLevelProviderScript.ALLOWED_FEEDS.has(feed_name), "provider must keep the %s feed available" % feed_name)
 	_check(game.get("community_actions") != null, "main scene must expose the authenticated Community action surface")
 	_check(game.get("community_actions").visible == false, "Community actions must stay hidden for Original levels")
 	_check(game.get("player_publish_actions") != null, "main scene must expose the Player publication surface")
@@ -216,8 +221,12 @@ func _run() -> void:
 	_check(game.get("player_publish_hint").visible == false, "publication hint must hide when publishing is available")
 
 	runtime_auth_session.clear()
+	game.set("current_community_feed", "popular")
 	game.call("_on_community_feed_loaded", community_entries)
 	_check(str(game.get("level_collection")) == "community", "community entries must switch the runtime collection")
+	_check(game.get("community_feed_actions").visible, "Community feed controls must remain visible while browsing Community")
+	_check(game.get("community_feed_buttons")["popular"].disabled, "active Community feed control must be disabled")
+	_check(str(game.get("level_label").text).begins_with("Community · Popular 1"), "Community level label must identify the active feed")
 	_check(game.get("community_actions").visible == false, "anonymous Community play must keep authenticated actions hidden")
 	var active_community_level: Dictionary = game.get("levels")[0]
 	_check(str(active_community_level.get("_community_public_id", "")) == "ERROW-SMOKE", "community runtime level must retain its public ID for engagement")
