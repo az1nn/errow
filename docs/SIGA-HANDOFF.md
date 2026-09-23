@@ -4,65 +4,78 @@
 
 - Repository: az1nn/errow
 - Default branch: master
-- Reconciled baseline HEAD before this wave: 102ed7ef261e118bb113ce54250b32ccbadc7a9d
-- Baseline workflow: Godot CI/CD #46 — success
-- SPEC-009 PR: #10
-- Exact validated PR HEAD: fe66202b311f7717475bd2dcad9112e680c6aea2
-- PR workflow: Godot CI/CD #50 (run 35876787713) — success
-- Merge commit: 306b54ecd6318b1003607eea1dbd4d7937d29faf
+- Reconciled baseline HEAD before this wave: bf622271141f7a21577d382ce836123da7cef440
+- Baseline workflow: Godot CI/CD #52 — success
+- SPEC-010 PR: #11
+- Exact validated PR HEAD: 709900d1453e58c83d1d31af9d84985a31bffd4d
+- PR workflow: Godot CI/CD #53 (run 35900209557) — success
+- Merge commit: a0ad28298a92ada3537050f60a93ef2c001f5be7
+- Exact merge workflow: Godot CI/CD #54 (run 35900365223) — success
+- GitHub Pages deploy on merge workflow: success
 
 ## Decision
 
 ADVANCE
 
-The SPEC-008 publication gate was reconciled green on exact master HEAD 102ed7ef261e118bb113ce54250b32ccbadc7a9d. No open PR or issue competed for ownership, and repository evidence explicitly left authenticated like/report UX deferred until a bearer-token session boundary existed.
+The SPEC-009 handoff publication gate was reconciled green on exact master HEAD bf622271141f7a21577d382ce836123da7cef440. No open PR or issue competed for ownership. Repository evidence already contained the complete server publication contract, stable local Player IDs, the in-memory bearer-session boundary and explicit future creator -> Community publication architecture, so the next coherent product gap was the missing Player publication surface.
 
 ## Completed milestone
 
-SPEC-009 — Authenticated Community actions.
+SPEC-010 — Player level Community publishing.
 
 ## Delivered
 
-- Provider-neutral Community auth-session boundary in Godot.
-- Bearer token remains in memory and is not persisted with level or local-store data.
-- Optional ERROW_COMMUNITY_AUTH_TOKEN runtime injection for development/native execution.
-- Session token changes propagate to CommunityLevelProvider.
-- Authenticated Community gameplay exposes Like and Unlike actions.
-- Authenticated Community gameplay exposes bounded report-reason selection and Report action.
-- Anonymous Community gameplay remains available and still records completed plays.
-- Original and Player flows remain independent of Community authentication.
-- Engagement/report results surface through lightweight gameplay status text.
-- Godot smoke coverage validates anonymous/authenticated state, token propagation and Community action visibility.
-- README advanced to SPEC-009.
+- Added `docs/SPEC-010-COMMUNITY-PUBLISHING.md` as the current implementation contract.
+- Player levels can expose **Publish to Community** when both the Community service and authenticated runtime session are available.
+- Original and Community levels never expose the Player publication action.
+- Anonymous publication is rejected by `CommunityLevelProvider` before transport.
+- Client publication accepts only Player provenance.
+- Unsaved Player state without a stable local ID is rejected before transport.
+- Existing structural validation and deterministic solvability checks remain mandatory before publication.
+- Stable local level IDs are sent as `client_level_id`, preserving the existing immutable revision semantics for later republication.
+- Successful publication surfaces the server-assigned public ID and revision while leaving the local Player level unchanged.
+- Auth-session changes now refresh both publication and Community engagement UI surfaces.
+- Godot smoke coverage validates publication eligibility, provenance, stable IDs and UI visibility boundaries.
+- README advanced to SPEC-010.
 
 ## Verified PR gates
 
-Exact PR HEAD fe66202b311f7717475bd2dcad9112e680c6aea2:
+Exact PR HEAD 709900d1453e58c83d1d31af9d84985a31bffd4d:
 
 - Community service job: success.
 - PostgreSQL 17 integration gate: success.
 - Production community-service image build: success.
 - Godot 4.7.2 import/parse: success.
-- Headless gameplay/auth smoke tests: success.
+- Headless gameplay/publication smoke tests: success.
 - Web release export/artifact: success.
 - GitHub Pages deploy: skipped as expected for pull_request events.
-- PR remained mergeable and was merged as 306b54ecd6318b1003607eea1dbd4d7937d29faf.
+- PR #11 remained mergeable with no review threads or submitted reviews and was merged as a0ad28298a92ada3537050f60a93ef2c001f5be7.
+
+## Verified master gates
+
+Exact merge HEAD a0ad28298a92ada3537050f60a93ef2c001f5be7:
+
+- Community service tests: success.
+- Godot/Web validation and release export: success.
+- GitHub Pages deployment: success.
 
 ## Invariants preserved
 
 - Original and Player levels remain local/offline-capable.
-- Anonymous Community browsing/play does not require identity.
-- Community bearer tokens are runtime session data, not puzzle data.
-- Published revisions remain immutable.
-- Existing SPEC-008 like/report idempotency and moderation semantics remain server-authoritative.
-- No identity vendor, paid hosting provider or production credentials were selected.
+- Community browsing remains non-fatal when the service is unavailable.
+- Publishing never converts or overwrites the local Player draft.
+- Published revisions remain server-authoritative and immutable.
+- Bearer tokens remain runtime-only session state and are not persisted with level data.
+- The client remains provider-neutral and does not select an identity vendor.
+- Server-side authentication, validation and revision assignment remain authoritative.
+- Existing like/report/play behavior remains independent of Player publication.
 - Human visual/device validation remains asynchronous and non-blocking.
 
 ## Active gate
 
 This handoff publication commit becomes the newest master HEAD and requires exact-SHA master CI plus GitHub Pages deployment reconciliation.
 
-Do not reuse PR #10 workflow evidence as proof for the newer master handoff-publication HEAD.
+Do not reuse PR #11 or merge workflow #54 evidence as proof for the newer handoff-publication HEAD.
 
 ## Next action
 
@@ -74,5 +87,7 @@ Do not reuse PR #10 workflow evidence as proof for the newer master handoff-publ
 
 - REAL REPOSITORY STATE > REPOSITORY HANDOFFS / CANON / SPECS > CHAT OR MODEL MEMORY.
 - One repository-local SIGA state only.
-- Production OAuth/OIDC browser flow, signup/login UX and token refresh remain future work.
+- OAuth/OIDC browser redirect, PKCE, signup/login and token refresh UX remain future work.
+- Production Community service provisioning/deployment remains an operational future decision.
 - Moderator administration UI remains future work.
+- Search, profiles, comments, follows and social graph remain future work.
