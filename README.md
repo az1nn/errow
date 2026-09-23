@@ -26,7 +26,7 @@ The **Create** flow lets a player build a 5×5 puzzle by cycling cells through e
 
 Player drafts are persisted as JSON under Godot's writable user storage. Solvable drafts appear under **My levels**. When a Community service is configured and the runtime session is authenticated, the active Player level can be published through the existing immutable revision contract without changing the local draft.
 
-The **Community** entry point loads the `New` feed from `CommunityLevelProvider` when a service URL is configured. Completed Community puzzles record play engagement through the same constrained provider boundary. When a runtime bearer token is present, Community gameplay also exposes explicit Like, Unlike and bounded Report actions; the token stays in memory and is never stored with level data. Remote entries are revalidated client-side and converted back into the same schema-v1 gameplay data used by Original and Player levels. An unconfigured service or anonymous session is non-fatal; local/offline play remains available.
+The **Community** entry point opens provider-backed discovery with `New`, `Popular`, `Trending` and `Curated` feeds when a service URL is configured. Completed Community puzzles record play engagement through the same constrained provider boundary. When a runtime bearer token is present, Community gameplay also exposes explicit Like, Unlike and bounded Report actions; the token stays in memory and is never stored with level data. Remote entries are revalidated client-side and converted back into the same schema-v1 gameplay data used by Original and Player levels. An unconfigured service or anonymous session is non-fatal; local/offline play remains available.
 
 ## Run locally
 
@@ -56,7 +56,7 @@ See `service/README.md` and `docs/COMMUNITY-API.md`.
 
 - Platform target: mobile + web.
 - Rendering: Godot compatibility renderer.
-- Current spec: `docs/SPEC-010-COMMUNITY-PUBLISHING.md`.
+- Current spec: `docs/SPEC-011-COMMUNITY-FEED-DISCOVERY.md`.
 - Community API contract: `docs/COMMUNITY-API.md`.
 - UGC research: `docs/UGC-RESEARCH.md`.
 - Continuation protocol: `.agents/skills/siga/`.

@@ -4,90 +4,78 @@
 
 - Repository: az1nn/errow
 - Default branch: master
-- Reconciled baseline HEAD before this wave: bf622271141f7a21577d382ce836123da7cef440
-- Baseline workflow: Godot CI/CD #52 — success
-- SPEC-010 PR: #11
-- Exact validated PR HEAD: 709900d1453e58c83d1d31af9d84985a31bffd4d
-- PR workflow: Godot CI/CD #53 (run 35900209557) — success
-- Merge commit: a0ad28298a92ada3537050f60a93ef2c001f5be7
-- Exact merge workflow: Godot CI/CD #54 (run 35900365223) — success
-- GitHub Pages deploy on merge workflow: success
+- Reconciled master HEAD before this wave: ee8a10b322821b4efce1205e519af2beab6abbc7
+- Exact master workflow: Godot CI/CD #55 (run 35900563596) — success
+- Exact master jobs:
+  - Community service tests — success
+  - Validate and export Web — success
+  - Deploy Web to GitHub Pages — success
+- Open issues at reconciliation: none
+- Open PRs at reconciliation: none
+- Active branch: feat/011-community-feed-discovery
+- PR: #12 (draft)
+- Implementation HEAD before this handoff publication: e5f56b50b1f2deba9e3f962f7e1a51706158a8ef
 
 ## Decision
 
 ADVANCE
 
-The SPEC-009 handoff publication gate was reconciled green on exact master HEAD bf622271141f7a21577d382ce836123da7cef440. No open PR or issue competed for ownership. Repository evidence already contained the complete server publication contract, stable local Player IDs, the in-memory bearer-session boundary and explicit future creator -> Community publication architecture, so the next coherent product gap was the missing Player publication surface.
+The previous SPEC-010 handoff publication gate is green on exact master HEAD ee8a10b322821b4efce1205e519af2beab6abbc7. Repository evidence shows the Community provider and service already support four discovery feeds while the Godot UI still hard-coded only the New feed. This is the next bounded product gap that can advance without selecting an external identity provider or production hosting platform.
 
-## Completed milestone
+## Active milestone
 
-SPEC-010 — Player level Community publishing.
+SPEC-011 — Community feed discovery.
 
-## Delivered
+## Delivered on the active branch
 
-- Added `docs/SPEC-010-COMMUNITY-PUBLISHING.md` as the current implementation contract.
-- Player levels can expose **Publish to Community** when both the Community service and authenticated runtime session are available.
-- Original and Community levels never expose the Player publication action.
-- Anonymous publication is rejected by `CommunityLevelProvider` before transport.
-- Client publication accepts only Player provenance.
-- Unsaved Player state without a stable local ID is rejected before transport.
-- Existing structural validation and deterministic solvability checks remain mandatory before publication.
-- Stable local level IDs are sent as `client_level_id`, preserving the existing immutable revision semantics for later republication.
-- Successful publication surfaces the server-assigned public ID and revision while leaving the local Player level unchanged.
-- Auth-session changes now refresh both publication and Community engagement UI surfaces.
-- Godot smoke coverage validates publication eligibility, provenance, stable IDs and UI visibility boundaries.
-- README advanced to SPEC-010.
+- Added docs/SPEC-011-COMMUNITY-FEED-DISCOVERY.md.
+- Community still enters New by default.
+- Added New, Popular, Trending and Curated discovery controls sourced from CommunityLevelProvider.ALLOWED_FEEDS.
+- The client delegates ordering/ranking to the server and does not duplicate feed algorithms.
+- Active Community feed identity is reflected in the level label and completion copy.
+- Feed controls remain isolated from Original and Player collections.
+- Existing Player publishing, likes, reports, play counting and offline/local behavior are preserved.
+- Godot smoke coverage verifies all four feed controls, visibility, active-feed state and labeling.
+- README now points to SPEC-011.
 
-## Verified PR gates
+## Concurrency reconciliation
 
-Exact PR HEAD 709900d1453e58c83d1d31af9d84985a31bffd4d:
+The branch was created from exact master HEAD ee8a10b322821b4efce1205e519af2beab6abbc7.
 
-- Community service job: success.
-- PostgreSQL 17 integration gate: success.
-- Production community-service image build: success.
-- Godot 4.7.2 import/parse: success.
-- Headless gameplay/publication smoke tests: success.
-- Web release export/artifact: success.
-- GitHub Pages deploy: skipped as expected for pull_request events.
-- PR #11 remained mergeable with no review threads or submitted reviews and was merged as a0ad28298a92ada3537050f60a93ef2c001f5be7.
+After the multi-file mutation, branch state was re-read from GitHub. The branch was confirmed:
 
-## Verified master gates
+- ahead_by: 4
+- behind_by: 0
+- changed files: README.md, docs/SPEC-011-COMMUNITY-FEED-DISCOVERY.md, src/main.gd, tests/smoke.gd
+- all intended changes present
 
-Exact merge HEAD a0ad28298a92ada3537050f60a93ef2c001f5be7:
-
-- Community service tests: success.
-- Godot/Web validation and release export: success.
-- GitHub Pages deployment: success.
-
-## Invariants preserved
-
-- Original and Player levels remain local/offline-capable.
-- Community browsing remains non-fatal when the service is unavailable.
-- Publishing never converts or overwrites the local Player draft.
-- Published revisions remain server-authoritative and immutable.
-- Bearer tokens remain runtime-only session state and are not persisted with level data.
-- The client remains provider-neutral and does not select an identity vendor.
-- Server-side authentication, validation and revision assignment remain authoritative.
-- Existing like/report/play behavior remains independent of Player publication.
-- Human visual/device validation remains asynchronous and non-blocking.
+No competing open PR or issue owns this scope.
 
 ## Active gate
 
-This handoff publication commit becomes the newest master HEAD and requires exact-SHA master CI plus GitHub Pages deployment reconciliation.
+This handoff publication commit becomes the newest PR HEAD.
 
-Do not reuse PR #11 or merge workflow #54 evidence as proof for the newer handoff-publication HEAD.
+Required next step:
 
-## Next action
+1. Resolve live PR #12 HEAD after this handoff publication.
+2. Consume exact-HEAD PR CI.
+3. Require Community service tests and Godot/Web validation to pass on that exact HEAD.
+4. Inspect PR mergeability, review threads and submitted reviews.
+5. If engineering-green and no blocking human gate exists, mark Ready and merge without bypassing checks.
+6. Reconcile the resulting master HEAD and GitHub Pages deployment.
+7. Persist the post-merge handoff on master only after exact merge-HEAD evidence is green.
 
-1. Resolve live master after this handoff publication.
-2. Consume the exact master Community service, Godot/Web and Pages deploy jobs.
-3. If green and no unfinished work appears, select the next milestone only from current repository evidence.
+Do not reuse master workflow #55 or pre-handoff branch evidence as proof for the new PR HEAD.
 
 ## Boundaries
 
 - REAL REPOSITORY STATE > REPOSITORY HANDOFFS / CANON / SPECS > CHAT OR MODEL MEMORY.
 - One repository-local SIGA state only.
-- OAuth/OIDC browser redirect, PKCE, signup/login and token refresh UX remain future work.
-- Production Community service provisioning/deployment remains an operational future decision.
+- CommunityLevelProvider remains the sole Godot network boundary.
+- Feed ranking and curation remain server-owned mutable metadata outside level schema v1.
+- Search by level/creator ID remains future work.
+- OAuth/OIDC login/signup/refresh UX remains future work.
+- Production Community service provisioning/deployment remains a separate operational decision.
 - Moderator administration UI remains future work.
-- Search, profiles, comments, follows and social graph remain future work.
+- Profiles, comments, follows and social graph remain future work.
+- Human visual/device validation remains asynchronous and non-blocking unless explicitly promoted to a gate.
