@@ -1,6 +1,8 @@
 class_name CommunityAuthSession
 extends RefCounted
 
+signal auth_token_changed(token)
+
 var auth_token := ""
 
 
@@ -9,11 +11,15 @@ func configure_from_environment() -> void:
 
 
 func set_auth_token(token: String) -> void:
-	auth_token = token.strip_edges()
+	var normalized := token.strip_edges()
+	if auth_token == normalized:
+		return
+	auth_token = normalized
+	auth_token_changed.emit(auth_token)
 
 
 func clear() -> void:
-	auth_token = ""
+	set_auth_token("")
 
 
 func is_authenticated() -> bool:
