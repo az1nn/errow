@@ -4,78 +4,107 @@
 
 - Repository: az1nn/errow
 - Default branch: master
-- Reconciled master HEAD before this wave: ee8a10b322821b4efce1205e519af2beab6abbc7
-- Exact master workflow: Godot CI/CD #55 (run 35900563596) — success
-- Exact master jobs:
-  - Community service tests — success
-  - Validate and export Web — success
-  - Deploy Web to GitHub Pages — success
-- Open issues at reconciliation: none
-- Open PRs at reconciliation: none
-- Active branch: feat/011-community-feed-discovery
-- PR: #12 (draft)
-- Implementation HEAD before this handoff publication: e5f56b50b1f2deba9e3f962f7e1a51706158a8ef
+- Reconciled baseline before SPEC-011: ee8a10b322821b4efce1205e519af2beab6abbc7
+- SPEC-011 branch: feat/011-community-feed-discovery
+- SPEC-011 PR: #12
+- Exact validated PR HEAD: 433e906195886165cd06d0255e9e62464127a8f3
+- PR workflow: Godot CI/CD #57 (run 35901623852) — success
+- Merge commit: 1f85210c19d7070d2a995af1c0d52356ef069185
+- Exact merge workflow: Godot CI/CD #58 (run 35901878551) — success
+- GitHub Pages deploy on merge workflow: success
+- Open PRs after merge reconciliation: none
+- Open issues after merge reconciliation: none
 
 ## Decision
 
 ADVANCE
 
-The previous SPEC-010 handoff publication gate is green on exact master HEAD ee8a10b322821b4efce1205e519af2beab6abbc7. Repository evidence shows the Community provider and service already support four discovery feeds while the Godot UI still hard-coded only the New feed. This is the next bounded product gap that can advance without selecting an external identity provider or production hosting platform.
+The SPEC-010 handoff publication gate was reconciled green on exact master HEAD ee8a10b322821b4efce1205e519af2beab6abbc7. Repository evidence showed that the provider and service already supported New, Popular, Trending and Curated discovery feeds while the Godot UI exposed only New. That bounded gap became SPEC-011.
 
-## Active milestone
+## Completed milestone
 
 SPEC-011 — Community feed discovery.
 
-## Delivered on the active branch
+## Delivered
 
-- Added docs/SPEC-011-COMMUNITY-FEED-DISCOVERY.md.
-- Community still enters New by default.
-- Added New, Popular, Trending and Curated discovery controls sourced from CommunityLevelProvider.ALLOWED_FEEDS.
-- The client delegates ordering/ranking to the server and does not duplicate feed algorithms.
-- Active Community feed identity is reflected in the level label and completion copy.
-- Feed controls remain isolated from Original and Player collections.
-- Existing Player publishing, likes, reports, play counting and offline/local behavior are preserved.
-- Godot smoke coverage verifies all four feed controls, visibility, active-feed state and labeling.
+- Added `docs/SPEC-011-COMMUNITY-FEED-DISCOVERY.md`.
+- Community still opens the New feed by default.
+- Added New, Popular, Trending and Curated feed controls generated from `CommunityLevelProvider.ALLOWED_FEEDS`.
+- The active feed is runtime UI state only and never enters level schema v1.
+- Feed ranking and curation remain server-owned; the client does not duplicate ranking algorithms.
+- Community level labels identify the active feed.
+- Community completion copy identifies the active feed when a set is cleared.
+- Original and Player collections hide Community discovery controls.
+- Existing Player publication, Community play counting, likes, reports and offline/local behavior remain intact.
+- Godot smoke coverage verifies all four supported feeds, control visibility, active-feed state and feed-aware labeling.
 - README now points to SPEC-011.
 
-## Concurrency reconciliation
+## Verified PR gates
 
-The branch was created from exact master HEAD ee8a10b322821b4efce1205e519af2beab6abbc7.
+Exact PR HEAD 433e906195886165cd06d0255e9e62464127a8f3:
 
-After the multi-file mutation, branch state was re-read from GitHub. The branch was confirmed:
+- Community service tests: success.
+- PostgreSQL 17 integration gate: success.
+- Production Community service image build: success.
+- Godot 4.7.2 import/parse: success.
+- Headless gameplay/feed-discovery smoke tests: success.
+- Web release export/artifact: success.
+- GitHub Pages deploy: skipped as expected for pull_request events.
+- PR #12 was mergeable with no review threads or submitted reviews and was merged without bypassing checks.
 
-- ahead_by: 4
-- behind_by: 0
-- changed files: README.md, docs/SPEC-011-COMMUNITY-FEED-DISCOVERY.md, src/main.gd, tests/smoke.gd
-- all intended changes present
+## Verified master gates
 
-No competing open PR or issue owns this scope.
+Exact merge HEAD 1f85210c19d7070d2a995af1c0d52356ef069185:
+
+- Community service tests: success.
+- PostgreSQL integration and production OCI image build: success.
+- Godot 4.7.2 import/parse: success.
+- Headless smoke tests: success.
+- Web release export/artifact: success.
+- GitHub Pages deployment: success.
+
+## Invariants preserved
+
+- CommunityLevelProvider remains the sole Godot client network boundary.
+- Original and Player levels remain local/offline-capable.
+- Community failure remains non-fatal to local gameplay.
+- Downloaded Community entries remain constrained JSON and are revalidated for structure and deterministic solvability.
+- Ranking, engagement, moderation and identity metadata remain outside level schema v1.
+- Published revisions remain immutable.
+- Bearer tokens remain runtime-only state.
+- Feed switching does not mutate level snapshots.
+- Human visual/device validation remains asynchronous and non-blocking.
+
+## Current repository state
+
+SPEC-011 is merged and engineering-green on its merge commit. No open PR or issue currently owns the next workstream.
+
+Repository evidence still identifies these future boundaries, subject to fresh reconciliation before any implementation:
+
+- search by public level ID / creator ID;
+- OAuth/OIDC login, signup and refresh UX;
+- production Community service provisioning/deployment;
+- moderator administration UI;
+- profiles, comments, follows and social graph.
+
+Do not select one merely from this handoff. The next standalone Siga must re-read real repository state first and choose only a still-supported bounded next milestone.
 
 ## Active gate
 
-This handoff publication commit becomes the newest PR HEAD.
+This handoff publication commit becomes the newest master HEAD and requires exact-SHA master CI plus GitHub Pages deployment reconciliation.
 
-Required next step:
+Do not reuse PR #12 workflow #57 or merge workflow #58 as proof for the newer handoff-publication HEAD.
 
-1. Resolve live PR #12 HEAD after this handoff publication.
-2. Consume exact-HEAD PR CI.
-3. Require Community service tests and Godot/Web validation to pass on that exact HEAD.
-4. Inspect PR mergeability, review threads and submitted reviews.
-5. If engineering-green and no blocking human gate exists, mark Ready and merge without bypassing checks.
-6. Reconcile the resulting master HEAD and GitHub Pages deployment.
-7. Persist the post-merge handoff on master only after exact merge-HEAD evidence is green.
+## Next action
 
-Do not reuse master workflow #55 or pre-handoff branch evidence as proof for the new PR HEAD.
+1. Resolve live master after this handoff publication.
+2. Consume the exact master Community service, Godot/Web and Pages deploy jobs.
+3. If green and no unfinished work appears, classify the next run from current repository evidence as RESUME, WATCH or ADVANCE.
+4. Select a new milestone only after that reconciliation.
 
 ## Boundaries
 
 - REAL REPOSITORY STATE > REPOSITORY HANDOFFS / CANON / SPECS > CHAT OR MODEL MEMORY.
 - One repository-local SIGA state only.
-- CommunityLevelProvider remains the sole Godot network boundary.
-- Feed ranking and curation remain server-owned mutable metadata outside level schema v1.
-- Search by level/creator ID remains future work.
-- OAuth/OIDC login/signup/refresh UX remains future work.
-- Production Community service provisioning/deployment remains a separate operational decision.
-- Moderator administration UI remains future work.
-- Profiles, comments, follows and social graph remain future work.
-- Human visual/device validation remains asynchronous and non-blocking unless explicitly promoted to a gate.
+- No external identity provider or hosting provider may be invented without an explicit repository decision.
+- Human visual/device validation remains asynchronous unless explicitly promoted to a blocking gate.
