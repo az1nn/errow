@@ -2,6 +2,7 @@ extends SceneTree
 
 const LevelRulesScript = preload("res://src/levels/level_rules.gd")
 const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
+const CommunityLevelProviderScript = preload("res://src/community/community_level_provider.gd")
 
 var failures := 0
 var finished := false
@@ -38,6 +39,7 @@ func _run() -> void:
 	_check(game.get("active_arrows").size() == 6, "level 1 must start with 6 arrows")
 	_check(LevelRulesScript.is_solvable(game.get("levels")[0]), "official level 1 must be solvable")
 	_check(game.get_node_or_null("LevelCreator") != null, "main scene must include the player level creator")
+	_check(game.get_node_or_null("CommunityLevelProvider") != null, "main scene must include the community provider boundary")
 
 	var deadlocked_level := {
 		"schema_version": 1,
@@ -49,6 +51,63 @@ func _run() -> void:
 		],
 	}
 	_check(LevelRulesScript.is_solvable(deadlocked_level) == false, "opposing arrows must be detected as a deadlock")
+
+	var community_feed_result: Dictionary = CommunityLevelProviderScript.parse_feed_document({
+		"levels": [
+			{
+				"public_id": "ERROW-SMOKE",
+				"revision": 2,
+				"creator_id": "creator-smoke",
+				"published_at": 123456,
+				"stats": {
+					"plays": 12,
+					"likes": 4,
+				},
+				"level": {
+					"schema_version": 1,
+					"name": "Remote smoke",
+					"subtitle": "Valid remote level",
+					"board_size": 5,
+					"arrows": [
+						[2, 0, "U"],
+						[2, 2, "U"],
+					],
+				},
+			},
+			{
+				"public_id": "ERROW-DEADLOCK",
+				"revision": 1,
+				"creator_id": "creator-smoke",
+				"level": deadlocked_level,
+			},
+		],
+	})
+	_check(bool(community_feed_result.get("ok", false)), "community feed envelope must parse")
+	var community_entries: Array = community_feed_result.get("entries", [])
+	_check(community_entries.size() == 1, "community feed must discard deadlocked remote levels")
+	if community_entries.size() == 1:
+		var community_entry: Dictionary = community_entries[0]
+		var community_level: Dictionary = community_entry.get("level", {})
+		_check(str(community_entry.get("public_id", "")) == "ERROW-SMOKE", "community metadata must remain outside level schema")
+		_check(int(community_entry.get("revision", 0)) == 2, "community revision must be preserved")
+		_check(str(community_level.get("source", "")) == "community", "downloaded level must use community provenance")
+		_check(str(community_level.get("id", "")) == "ERROW-SMOKE@r2", "runtime level id must include immutable revision")
+
+	var valid_publish: Dictionary = CommunityLevelProviderScript.build_publish_document({
+		"schema_version": 1,
+		"id": "local-smoke",
+		"source": "player",
+		"name": "Publish smoke",
+		"subtitle": "Client validation",
+		"board_size": 5,
+		"arrows": [
+			[2, 0, "U"],
+			[2, 2, "U"],
+		],
+	})
+	_check(bool(valid_publish.get("ok", false)), "solvable player level must produce a publish document")
+	var deadlocked_publish: Dictionary = CommunityLevelProviderScript.build_publish_document(deadlocked_level)
+	_check(bool(deadlocked_publish.get("ok", false)) == false, "deadlocked level must be rejected before publication")
 
 	var test_store_path := "user://errow-smoke-community-levels.json"
 	var test_store: LocalLevelStore = LocalLevelStoreScript.new(test_store_path)
