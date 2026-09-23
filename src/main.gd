@@ -51,6 +51,7 @@ func _ready() -> void:
 	var community_api_url := str(ProjectSettings.get_setting("errow/community_api_base_url", ""))
 	community_level_provider = CommunityLevelProviderScript.new(community_api_url)
 	community_level_provider.name = "CommunityLevelProvider"
+	community_auth_session.auth_token_changed.connect(community_level_provider.set_auth_token)
 	community_level_provider.set_auth_token(community_auth_session.bearer_token())
 	community_level_provider.feed_loaded.connect(_on_community_feed_loaded)
 	community_level_provider.engagement_updated.connect(_on_community_engagement_updated)
