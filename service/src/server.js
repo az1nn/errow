@@ -12,8 +12,9 @@ const allowedOrigin = process.env.ERROW_ALLOWED_ORIGIN ?? "*";
 const store = await createStore();
 await store.init();
 const authenticateRequest = createAuthenticator();
+const moderatorIds = parseModeratorIds(process.env.ERROW_MODERATOR_IDS ?? "");
 
-const server = createServer(createApp({ store, authenticateRequest, allowedOrigin }));
+const server = createServer(createApp({ store, authenticateRequest, allowedOrigin, moderatorIds }));
 server.listen(port, host, () => {
   console.log(`Errow community service listening on http://${host}:${port}`);
 });
@@ -45,4 +46,9 @@ function createAuthenticator() {
   }
   if (mode !== "static") throw new Error(`Unsupported ERROW_AUTH_MODE: ${mode}`);
   return createStaticAuthenticator(parseAuthTokens(process.env.ERROW_AUTH_TOKENS ?? "{}"));
+}
+
+
+function parseModeratorIds(raw) {
+  return new Set(raw.split(",").map((value) => value.trim()).filter(Boolean));
 }
