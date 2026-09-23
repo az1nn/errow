@@ -28,6 +28,9 @@ var subtitle_label: Label
 var remaining_label: Label
 var moves_label: Label
 var status_label: Label
+var player_publish_actions: HBoxContainer
+var player_publish_hint: Label
+var player_publish_button: Button
 var community_actions: HBoxContainer
 var community_auth_hint: Label
 var community_report_reason: OptionButton
@@ -51,9 +54,10 @@ func _ready() -> void:
 	var community_api_url := str(ProjectSettings.get_setting("errow/community_api_base_url", ""))
 	community_level_provider = CommunityLevelProviderScript.new(community_api_url)
 	community_level_provider.name = "CommunityLevelProvider"
-	community_auth_session.auth_token_changed.connect(community_level_provider.set_auth_token)
+	community_auth_session.auth_token_changed.connect(_on_community_auth_token_changed)
 	community_level_provider.set_auth_token(community_auth_session.bearer_token())
 	community_level_provider.feed_loaded.connect(_on_community_feed_loaded)
+	community_level_provider.published.connect(_on_community_published)
 	community_level_provider.engagement_updated.connect(_on_community_engagement_updated)
 	community_level_provider.report_submitted.connect(_on_community_report_submitted)
 	community_level_provider.request_failed.connect(_on_community_request_failed)
@@ -209,6 +213,28 @@ func _build_ui() -> void:
 	create_level.pressed.connect(_open_creator)
 	_apply_action_style(create_level)
 	library_actions.add_child(create_level)
+
+	player_publish_hint = Label.new()
+	player_publish_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	player_publish_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	player_publish_hint.add_theme_font_size_override("font_size", 16)
+	player_publish_hint.add_theme_color_override("font_color", Color("#7f8a9d"))
+	player_publish_hint.visible = false
+	stack.add_child(player_publish_hint)
+
+	player_publish_actions = HBoxContainer.new()
+	player_publish_actions.name = "PlayerPublishActions"
+	player_publish_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	player_publish_actions.visible = false
+	stack.add_child(player_publish_actions)
+
+	player_publish_button = Button.new()
+	player_publish_button.text = "Publish to Community"
+	player_publish_button.custom_minimum_size = Vector2(260, 52)
+	player_publish_button.focus_mode = Control.FOCUS_NONE
+	player_publish_button.pressed.connect(_publish_current_player_level)
+	_apply_action_style(player_publish_button)
+	player_publish_actions.add_child(player_publish_button)
 
 	community_auth_hint = Label.new()
 	community_auth_hint.text = "Authenticated Community actions are unavailable in anonymous mode."
@@ -378,8 +404,75 @@ func _on_community_feed_loaded(entries: Array) -> void:
 
 func _on_community_request_failed(message: String) -> void:
 	overlay.visible = false
+	_set_player_publish_enabled(true)
 	_set_community_actions_enabled(true)
 	status_label.text = message
+
+
+func _on_community_auth_token_changed(token: String) -> void:
+	if community_level_provider != null:
+		community_level_provider.set_auth_token(token)
+	_refresh_player_publish_actions()
+	_refresh_community_actions()
+
+
+func _current_player_level() -> Dictionary:
+	if level_collection != "player" or levels.is_empty():
+		return {}
+	return levels[level_index]
+
+
+func _publish_current_player_level() -> void:
+	if community_level_provider == null or not community_level_provider.is_configured():
+		status_label.text = "Community service is not configured yet."
+		return
+	if community_auth_session == null or not community_auth_session.is_authenticated():
+		status_label.text = "Authentication is required to publish Player levels."
+		return
+
+	var level := _current_player_level()
+	if level.is_empty():
+		return
+
+	_set_player_publish_enabled(false)
+	status_label.text = "Publishing Player level to Community..."
+	if not community_level_provider.publish_level(level):
+		_set_player_publish_enabled(true)
+
+
+func _on_community_published(entry: Dictionary) -> void:
+	_set_player_publish_enabled(true)
+	var public_id := str(entry.get("public_id", "")).strip_edges()
+	var revision := int(entry.get("revision", 0))
+	if public_id.is_empty() or revision < 1:
+		status_label.text = "Community publication succeeded."
+		return
+	status_label.text = "Published to Community · %s · revision %d." % [public_id, revision]
+
+
+func _set_player_publish_enabled(enabled: bool) -> void:
+	if player_publish_button != null:
+		player_publish_button.disabled = not enabled
+
+
+func _refresh_player_publish_actions() -> void:
+	if player_publish_actions == null or player_publish_hint == null:
+		return
+
+	var is_player := level_collection == "player"
+	var configured := community_level_provider != null and community_level_provider.is_configured()
+	var authenticated := community_auth_session != null and community_auth_session.is_authenticated()
+
+	player_publish_actions.visible = is_player and configured and authenticated
+	player_publish_hint.visible = is_player and (not configured or not authenticated)
+
+	if player_publish_hint.visible:
+		if not configured:
+			player_publish_hint.text = "Community publishing is unavailable until the service is configured."
+		else:
+			player_publish_hint.text = "Authentication is required to publish Player levels."
+
+	_set_player_publish_enabled(true)
 
 
 func _current_community_public_id() -> String:
@@ -498,6 +591,7 @@ func _load_level(index: int) -> void:
 	status_label.text = "Find a clear path."
 	_rebuild_board()
 	_update_stats()
+	_refresh_player_publish_actions()
 	_refresh_community_actions()
 
 
