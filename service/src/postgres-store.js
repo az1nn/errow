@@ -105,6 +105,112 @@ export class PostgresStore {
     );
     return result.rows.map(mapEntry);
   }
+
+  async recordPlay(publicId) {
+    const result = await this.pool.query(
+      "UPDATE community_level_stats SET plays = plays + 1 " +
+      "WHERE public_id = $1 AND takedown = FALSE RETURNING plays, likes",
+      [publicId],
+    );
+    if (!result.rows[0]) return null;
+    return {
+      plays: Number(result.rows[0].plays),
+      likes: Number(result.rows[0].likes),
+    };
+  }
+
+  async setLike({ publicId, userId, liked, now = Date.now() }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const locked = await client.query(
+        "SELECT plays, likes, takedown FROM community_level_stats WHERE public_id = $1 FOR UPDATE",
+        [publicId],
+      );
+      if (!locked.rows[0] || locked.rows[0].takedown) {
+        await client.query("ROLLBACK");
+        return null;
+      }
+
+      let changed = false;
+      if (liked) {
+        const inserted = await client.query(
+          "INSERT INTO community_level_likes (public_id, user_id, created_at) VALUES ($1, $2, $3) " +
+          "ON CONFLICT (public_id, user_id) DO NOTHING RETURNING public_id",
+          [publicId, userId, Math.floor(now / 1000)],
+        );
+        changed = inserted.rowCount === 1;
+        if (changed) {
+          await client.query(
+            "UPDATE community_level_stats SET likes = likes + 1 WHERE public_id = $1",
+            [publicId],
+          );
+        }
+      } else {
+        const removed = await client.query(
+          "DELETE FROM community_level_likes WHERE public_id = $1 AND user_id = $2 RETURNING public_id",
+          [publicId, userId],
+        );
+        changed = removed.rowCount === 1;
+        if (changed) {
+          await client.query(
+            "UPDATE community_level_stats SET likes = GREATEST(0, likes - 1) WHERE public_id = $1",
+            [publicId],
+          );
+        }
+      }
+
+      const stats = (await client.query(
+        "SELECT plays, likes FROM community_level_stats WHERE public_id = $1",
+        [publicId],
+      )).rows[0];
+      await client.query("COMMIT");
+      return {
+        plays: Number(stats.plays),
+        likes: Number(stats.likes),
+        liked: Boolean(liked),
+      };
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch {}
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async report({ publicId, userId, reason, now = Date.now() }) {
+    const result = await this.pool.query(
+      "INSERT INTO community_level_reports (public_id, reporter_id, reason, reported_at) " +
+      "SELECT $1, $2, $3, $4 WHERE EXISTS (" +
+      "SELECT 1 FROM community_level_stats WHERE public_id = $1 AND takedown = FALSE" +
+      ") ON CONFLICT (public_id, reporter_id) DO UPDATE SET reason = EXCLUDED.reason, reported_at = EXCLUDED.reported_at " +
+      "RETURNING public_id",
+      [publicId, userId, reason, Math.floor(now / 1000)],
+    );
+    return result.rows[0] ? { accepted: true } : null;
+  }
+
+  async moderate({ publicId, curated = null, takedown = null }) {
+    const result = await this.pool.query(
+      "UPDATE community_level_stats SET curated = COALESCE($2, curated), takedown = COALESCE($3, takedown) " +
+      "WHERE public_id = $1 RETURNING curated, takedown",
+      [publicId, curated, takedown],
+    );
+    if (!result.rows[0]) return null;
+
+    const reportCount = await this.pool.query(
+      "SELECT COUNT(*)::bigint AS reports FROM community_level_reports WHERE public_id = $1",
+      [publicId],
+    );
+    return {
+      public_id: publicId,
+      moderation: {
+        curated: Boolean(result.rows[0].curated),
+        takedown: Boolean(result.rows[0].takedown),
+        reports: Number(reportCount.rows[0].reports),
+      },
+    };
+  }
 }
 
 function mapEntry(row) {

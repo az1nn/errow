@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { randomBytes } from "node:crypto";
 
-const EMPTY_STATE = () => ({ version: 1, levels: {}, client_index: {}, stats: {} });
+const EMPTY_STATE = () => ({ version: 1, levels: {}, client_index: {}, stats: {}, likes: {}, reports: {} });
 const FEEDS = new Set(["new", "popular", "trending", "curated"]);
 
 export class JsonFileStore {
@@ -82,6 +82,75 @@ export class JsonFileStore {
     return entries.sort(compareNew);
   }
 
+  async recordPlay(publicId) {
+    return this.#serialized(async () => {
+      if (!this.state.levels[publicId] || this.state.stats[publicId]?.takedown) return null;
+      const stats = this.state.stats[publicId] ??= { plays: 0, likes: 0, curated: false, takedown: false };
+      stats.plays = (stats.plays ?? 0) + 1;
+      await this.#persist();
+      return this.#publicStats(publicId);
+    });
+  }
+
+  async setLike({ publicId, userId, liked }) {
+    return this.#serialized(async () => {
+      if (!this.state.levels[publicId] || this.state.stats[publicId]?.takedown) return null;
+      const stats = this.state.stats[publicId] ??= { plays: 0, likes: 0, curated: false, takedown: false };
+      const key = publicId + "\u0000" + userId;
+      const wasLiked = Boolean(this.state.likes[key]);
+
+      if (liked && !wasLiked) {
+        this.state.likes[key] = true;
+        stats.likes = (stats.likes ?? 0) + 1;
+      } else if (!liked && wasLiked) {
+        delete this.state.likes[key];
+        stats.likes = Math.max(0, (stats.likes ?? 0) - 1);
+      }
+
+      await this.#persist();
+      return { ...this.#publicStats(publicId), liked: Boolean(this.state.likes[key]) };
+    });
+  }
+
+  async report({ publicId, userId, reason, now = Date.now() }) {
+    return this.#serialized(async () => {
+      if (!this.state.levels[publicId] || this.state.stats[publicId]?.takedown) return null;
+      const key = publicId + "\u0000" + userId;
+      this.state.reports[key] = {
+        reason,
+        reported_at: Math.floor(now / 1000),
+      };
+      await this.#persist();
+      return { accepted: true };
+    });
+  }
+
+  async moderate({ publicId, curated = null, takedown = null }) {
+    return this.#serialized(async () => {
+      if (!this.state.levels[publicId]) return null;
+      const stats = this.state.stats[publicId] ??= { plays: 0, likes: 0, curated: false, takedown: false };
+      if (typeof curated === "boolean") stats.curated = curated;
+      if (typeof takedown === "boolean") stats.takedown = takedown;
+      await this.#persist();
+
+      const prefix = publicId + "\u0000";
+      const reports = Object.keys(this.state.reports).filter((key) => key.startsWith(prefix)).length;
+      return {
+        public_id: publicId,
+        moderation: {
+          curated: Boolean(stats.curated),
+          takedown: Boolean(stats.takedown),
+          reports,
+        },
+      };
+    });
+  }
+
+  #publicStats(publicId) {
+    const stats = this.state.stats[publicId] ?? { plays: 0, likes: 0 };
+    return { plays: stats.plays ?? 0, likes: stats.likes ?? 0 };
+  }
+
   #entry(publicId, revision) {
     const record = this.state.levels[publicId];
     const snapshot = record.revisions[String(revision)];
@@ -117,6 +186,8 @@ function normalizeState(value) {
     levels: value.levels ?? {},
     client_index: value.client_index ?? {},
     stats: value.stats ?? {},
+    likes: value.likes ?? {},
+    reports: value.reports ?? {},
   };
 }
 

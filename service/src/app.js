@@ -3,8 +3,9 @@ import { isSolvable, sanitizeLevel, validateLevel } from "./level-rules.js";
 
 const FEEDS = new Set(["new", "popular", "trending", "curated"]);
 const MAX_BODY_BYTES = 64 * 1024;
+const REPORT_REASONS = new Set(["spam", "abusive", "misleading", "broken", "other"]);
 
-export function createApp({ store, authenticateRequest, authTokens = new Map(), allowedOrigin = "*" }) {
+export function createApp({ store, authenticateRequest, authTokens = new Map(), allowedOrigin = "*", moderatorIds = new Set() }) {
   const authenticate = authenticateRequest ?? createStaticAuthenticator(authTokens);
 
   return async function handler(req, res) {
@@ -32,6 +33,63 @@ export function createApp({ store, authenticateRequest, authTokens = new Map(), 
         const entry = await store.getRevision(revisionMatch[1], Number(revisionMatch[2]));
         if (!entry) return error(res, 404, "not_found", "Published revision not found.");
         return json(res, 200, { entry });
+      }
+
+      const playMatch = url.pathname.match(/^\/v1\/levels\/([A-Za-z0-9-]+)\/plays$/);
+      if (req.method === "POST" && playMatch) {
+        const stats = await store.recordPlay(playMatch[1]);
+        if (!stats) return error(res, 404, "not_found", "Published level not found.");
+        return json(res, 200, { stats });
+      }
+
+      const likeMatch = url.pathname.match(/^\/v1\/levels\/([A-Za-z0-9-]+)\/like$/);
+      if (req.method === "PUT" && likeMatch) {
+        const userId = await authenticate(req);
+        if (!userId) return error(res, 401, "unauthorized", "A valid bearer token is required.");
+        const body = await readJson(req);
+        if (typeof body.liked !== "boolean") {
+          return error(res, 400, "invalid_like", "liked must be a boolean.");
+        }
+        const stats = await store.setLike({ publicId: likeMatch[1], userId, liked: body.liked });
+        if (!stats) return error(res, 404, "not_found", "Published level not found.");
+        return json(res, 200, { stats });
+      }
+
+      const reportMatch = url.pathname.match(/^\/v1\/levels\/([A-Za-z0-9-]+)\/reports$/);
+      if (req.method === "POST" && reportMatch) {
+        const userId = await authenticate(req);
+        if (!userId) return error(res, 401, "unauthorized", "A valid bearer token is required.");
+        const body = await readJson(req);
+        if (typeof body.reason !== "string" || !REPORT_REASONS.has(body.reason)) {
+          return error(res, 400, "invalid_report", "Unsupported report reason.");
+        }
+        const report = await store.report({ publicId: reportMatch[1], userId, reason: body.reason });
+        if (!report) return error(res, 404, "not_found", "Published level not found.");
+        return json(res, 202, report);
+      }
+
+      const moderationMatch = url.pathname.match(/^\/v1\/moderation\/levels\/([A-Za-z0-9-]+)$/);
+      if (req.method === "PATCH" && moderationMatch) {
+        const userId = await authenticate(req);
+        if (!userId) return error(res, 401, "unauthorized", "A valid bearer token is required.");
+        if (!moderatorIds.has(userId)) return error(res, 403, "forbidden", "Moderator access is required.");
+
+        const body = await readJson(req);
+        const hasCurated = Object.prototype.hasOwnProperty.call(body, "curated");
+        const hasTakedown = Object.prototype.hasOwnProperty.call(body, "takedown");
+        if ((!hasCurated && !hasTakedown) ||
+            (hasCurated && typeof body.curated !== "boolean") ||
+            (hasTakedown && typeof body.takedown !== "boolean")) {
+          return error(res, 400, "invalid_moderation", "Provide curated and/or takedown as booleans.");
+        }
+
+        const moderation = await store.moderate({
+          publicId: moderationMatch[1],
+          curated: hasCurated ? body.curated : null,
+          takedown: hasTakedown ? body.takedown : null,
+        });
+        if (!moderation) return error(res, 404, "not_found", "Published level not found.");
+        return json(res, 200, moderation);
       }
 
       if (req.method === "POST" && url.pathname === "/v1/levels") {
@@ -92,7 +150,7 @@ async function readJson(req) {
 function applyCors(res, origin) {
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, OPTIONS");
   res.setHeader("Vary", "Origin");
 }
 

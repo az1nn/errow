@@ -302,7 +302,10 @@ func _on_community_feed_loaded(entries: Array) -> void:
 		var level_variant = entry.get("level", {})
 		if typeof(level_variant) != TYPE_DICTIONARY:
 			continue
-		community_levels.append(level_variant)
+		var runtime_level: Dictionary = level_variant.duplicate(true)
+		runtime_level["_community_public_id"] = str(entry.get("public_id", ""))
+		runtime_level["_community_revision"] = int(entry.get("revision", 0))
+		community_levels.append(runtime_level)
 
 	if community_levels.is_empty():
 		status_label.text = "Community feed is online, but no playable levels were returned."
@@ -478,6 +481,7 @@ func _show_complete() -> void:
 	overlay.visible = true
 
 	if level_collection == "community":
+		_record_community_completion()
 		if levels.size() == 1:
 			overlay_title.text = "Community level cleared"
 			overlay_copy.text = "Solved in %d successful moves." % moves
@@ -515,6 +519,16 @@ func _show_complete() -> void:
 		overlay_title.text = "Level cleared"
 		overlay_copy.text = "Solved in %d successful moves. Ready for the next board?" % moves
 		overlay_button.text = "Next level"
+
+
+func _record_community_completion() -> void:
+	if community_level_provider == null or levels.is_empty():
+		return
+	var current_level: Dictionary = levels[level_index]
+	var public_id := str(current_level.get("_community_public_id", "")).strip_edges()
+	if public_id.is_empty():
+		return
+	community_level_provider.record_play(public_id)
 
 
 func _restart_level() -> void:

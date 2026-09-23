@@ -4,61 +4,63 @@
 
 - Repository: az1nn/errow
 - Default branch: master
-- Verified HEAD: 71caa8cd8fb74b4ed7a62d79389e28c84b431d95
-- Active PR: none at reconciliation
-
-## Current milestone
-
-- Repository-local SIGA + LORE protocol bootstrap.
-- Prior repository milestone SPEC-007 — Production community foundation is complete.
-- The previous target-local handoff documented SPEC-008 community engagement + moderation mutations as the next logical workstream; no SPEC-008 spec file existed at this reconciliation point.
+- Reconciled master HEAD: 224fa3fe969e3e7eac1ac5510dce2f4cd31ca09a
+- Baseline workflow: Godot CI/CD #42
+- Baseline workflow conclusion: success
+- Active branch: feat/008-community-engagement-moderation
+- Active PR: #9
 
 ## Decision
 
 ADVANCE
 
-Previous work was verifiably complete, no PR was open, the exact master workflow was green, and the target-local predecessor handoff documented the next workstream direction.
+The live master baseline was green on exact SHA 224fa3fe969e3e7eac1ac5510dce2f4cd31ca09a, there was no open PR, and SPEC-007 explicitly left engagement/moderation mutations as the next supported Community workstream.
+
+## Current milestone
+
+SPEC-008 — Community engagement and moderation.
 
 ## Completed this wave
 
-- Replaced the broad SIGA procedure with an Errow-local Godot continuation skill.
-- Moved canonical SIGA continuation state to docs/SIGA-HANDOFF.md.
-- Removed the legacy .agents/skills/siga/HANDOFF.md state location.
-- Added the repository-local narrative-only LORE skill.
-- Added docs/lore/README.md without inventing narrative canon.
-- Added docs/lore/LORE-HANDOFF.md with a target-local narrative bootstrap state.
+- Added an explicit SPEC-008 before implementation.
+- Added anonymous completed-play counting for visible Community levels.
+- Added authenticated idempotent like/unlike state per user and level.
+- Added authenticated bounded reports with one report per user and level.
+- Added moderator-only curation/takedown mutations through configured authenticated subject IDs.
+- Persisted equivalent semantics in JSON local mode and PostgreSQL production mode.
+- Preserved immutable published revisions; stats/moderation remain mutable side data.
+- Added Godot Community provider operations for play, like and report.
+- Preserved Community public ID/revision metadata in runtime levels.
+- Record a play when a Community puzzle is successfully cleared.
+- Extended Node/PostgreSQL and Godot smoke coverage.
+- Updated Community API, service docs and README project state.
 
-## Verified gates
+## Invariants preserved
 
-- GitHub Actions run 35852831778 is bound to exact HEAD 71caa8cd8fb74b4ed7a62d79389e28c84b431d95 and concluded success.
-- Community service tests job: success.
-- Godot 4.7.2 headless import/parse, smoke tests and Web export job: success.
-- GitHub Pages deployment job: success.
-- Open pull requests at reconciliation: none.
-
-The commit publishing this handoff changes repository HEAD. These gate claims must not be reused for that newer HEAD; the next Siga run must reconcile the live commit and its own checks.
-
-## Delivery
-
-- Export: Godot Web preset in export_presets.cfg; CI verifies index.html, index.wasm and index.pck.
-- Deployment: GitHub Pages from successful master CI.
-- Playable URL: https://az1nn.github.io/errow/
-- Verified deployment commit: 71caa8cd8fb74b4ed7a62d79389e28c84b431d95
+- Original and Player levels remain local/offline-capable.
+- Community submissions remain constrained data, never executable Godot content.
+- Published revisions remain immutable.
+- Takedown hides levels from feeds and immutable-revision reads.
+- Curation affects only the curated feed.
+- Repeated like/report state cannot inflate aggregates/queue cardinality.
+- Human visual/device validation remains asynchronous and non-blocking.
 
 ## Active gate
 
-- None on the verified baseline.
-- Any workflow triggered by the handoff publication commit belongs to that newer exact HEAD and must be reconciled before further advancement.
+PR #9 GitHub Actions on the exact live PR HEAD after this handoff commit.
+
+Do not merge using CI evidence from an earlier branch commit.
 
 ## Next action
 
-1. Resolve live master HEAD and exact GitHub Actions/deployment state.
-2. If that HEAD is green and no unfinished work appeared, derive the next coherent wave from the documented SPEC-008 direction and create a real spec before implementation if one still does not exist.
+1. Resolve the new exact PR #9 HEAD created by this handoff update.
+2. Consume GitHub Actions for that exact SHA.
+3. If all blocking jobs succeed and the PR remains mergeable, merge PR #9.
+4. Reconcile the resulting master HEAD and its push/deploy workflow before further advancement.
 
 ## Boundaries
 
 - REAL REPOSITORY STATE > REPOSITORY HANDOFFS / CANON / SPECS > CHAT OR MODEL MEMORY.
-- Do not create parallel SIGA state outside this repository.
-- Do not claim CI or deployment evidence for a different HEAD.
-- Do not provision paid production infrastructure without an explicit provider/cost decision.
-- Keep Original, Player and Community level sources explicit and preserve offline/local play.
+- One repository-local SIGA state only.
+- No paid production infrastructure is selected or provisioned by SPEC-008.
+- Login/signup UX and moderator UI remain future work.

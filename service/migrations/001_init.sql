@@ -29,4 +29,23 @@ CREATE INDEX IF NOT EXISTS community_level_revisions_published_idx
 CREATE INDEX IF NOT EXISTS community_level_stats_feed_idx
   ON community_level_stats (takedown, curated, likes DESC, plays DESC);
 
+
+CREATE TABLE IF NOT EXISTS community_level_likes (
+  public_id TEXT NOT NULL REFERENCES community_levels(public_id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (public_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS community_level_reports (
+  public_id TEXT NOT NULL REFERENCES community_levels(public_id) ON DELETE CASCADE,
+  reporter_id TEXT NOT NULL,
+  reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 64),
+  reported_at BIGINT NOT NULL,
+  PRIMARY KEY (public_id, reporter_id)
+);
+
+CREATE INDEX IF NOT EXISTS community_level_reports_queue_idx
+  ON community_level_reports (reported_at ASC, public_id);
+
 COMMIT;
