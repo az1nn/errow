@@ -3,6 +3,7 @@ extends SceneTree
 const LevelRulesScript = preload("res://src/levels/level_rules.gd")
 const LocalLevelStoreScript = preload("res://src/levels/local_level_store.gd")
 const CommunityLevelProviderScript = preload("res://src/community/community_level_provider.gd")
+const CommunityAuthSessionScript = preload("res://src/community/community_auth_session.gd")
 
 var failures := 0
 var finished := false
@@ -40,6 +41,16 @@ func _run() -> void:
 	_check(LevelRulesScript.is_solvable(game.get("levels")[0]), "official level 1 must be solvable")
 	_check(game.get_node_or_null("LevelCreator") != null, "main scene must include the player level creator")
 	_check(game.get_node_or_null("CommunityLevelProvider") != null, "main scene must include the community provider boundary")
+	_check(game.get_node_or_null("CommunityActions") != null, "main scene must expose the authenticated Community action surface")
+	_check(game.get("community_actions").visible == false, "Community actions must stay hidden for Original levels")
+
+	var auth_session := CommunityAuthSessionScript.new()
+	_check(auth_session.is_authenticated() == false, "community auth session must start anonymous")
+	auth_session.set_auth_token("  smoke-token  ")
+	_check(auth_session.is_authenticated(), "community auth session must become authenticated after token injection")
+	_check(auth_session.bearer_token() == "smoke-token", "community auth session must normalize surrounding token whitespace")
+	auth_session.clear()
+	_check(auth_session.is_authenticated() == false, "community auth session clear must restore anonymous mode")
 
 	var deadlocked_level := {
 		"schema_version": 1,
@@ -171,11 +182,18 @@ func _run() -> void:
 
 	game.call("_on_community_feed_loaded", community_entries)
 	_check(str(game.get("level_collection")) == "community", "community entries must switch the runtime collection")
+	_check(game.get("community_actions").visible == false, "anonymous Community play must keep authenticated actions hidden")
 	var active_community_level: Dictionary = game.get("levels")[0]
 	_check(str(active_community_level.get("_community_public_id", "")) == "ERROW-SMOKE", "community runtime level must retain its public ID for engagement")
 	_check(int(active_community_level.get("_community_revision", 0)) == 2, "community runtime level must retain its immutable revision")
+	var runtime_auth_session = game.get("community_auth_session")
+	runtime_auth_session.set_auth_token("smoke-token")
+	game.get("community_level_provider").set_auth_token(runtime_auth_session.bearer_token())
+	game.call("_refresh_community_actions")
+	_check(game.get("community_actions").visible, "authenticated Community play must expose engagement controls")
 	game.call("_show_official_levels")
 	_check(str(game.get("level_collection")) == "official", "official levels must remain available after community browsing")
+	_check(game.get("community_actions").visible == false, "Community actions must hide again outside Community play")
 
 	game.queue_free()
 	await process_frame
