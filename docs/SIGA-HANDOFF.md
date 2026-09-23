@@ -4,74 +4,75 @@
 
 - Repository: az1nn/errow
 - Default branch: master
-- Reconciled baseline HEAD: 224fa3fe969e3e7eac1ac5510dce2f4cd31ca09a
-- Baseline workflow: Godot CI/CD #42 — success
-- SPEC-008 PR: #9
-- Exact validated PR HEAD: 31823d572c2ec118a486d98ef7eb6c6936986538
-- PR workflow: Godot CI/CD #44 — success
-- Merge commit: a61c7c94a63c77c4cdedbe7fd911efa1c11a9b0d
+- Reconciled baseline HEAD before this wave: 102ed7ef261e118bb113ce54250b32ccbadc7a9d
+- Baseline workflow: Godot CI/CD #46 — success
+- SPEC-009 PR: #10
+- Exact validated PR HEAD: fe66202b311f7717475bd2dcad9112e680c6aea2
+- PR workflow: Godot CI/CD #50 (run 35876787713) — success
+- Merge commit: 306b54ecd6318b1003607eea1dbd4d7937d29faf
 
 ## Decision
 
 ADVANCE
 
-The live baseline was green, no competing workstream existed, and SPEC-007 explicitly left Community engagement/moderation mutations as the next supported increment.
+The SPEC-008 publication gate was reconciled green on exact master HEAD 102ed7ef261e118bb113ce54250b32ccbadc7a9d. No open PR or issue competed for ownership, and repository evidence explicitly left authenticated like/report UX deferred until a bearer-token session boundary existed.
 
 ## Completed milestone
 
-SPEC-008 — Community engagement and moderation.
+SPEC-009 — Authenticated Community actions.
 
 ## Delivered
 
-- Anonymous completed-play mutation for visible Community levels.
-- Authenticated idempotent like/unlike state per user and level.
-- Authenticated bounded reports with one report per user and level.
-- Moderator-only curation/takedown mutations using configured authenticated subject IDs.
-- Equivalent persistence semantics in JSON local mode and PostgreSQL production mode.
-- Immutable published revisions preserved; engagement/moderation remain mutable side data.
-- Godot provider operations for play, like and report.
-- Community public ID/revision retained in runtime level metadata.
-- Successful Community completion records a play.
-- Node service tests, PostgreSQL integration coverage and Godot smoke coverage extended.
-- Community API, service docs and README advanced to SPEC-008.
+- Provider-neutral Community auth-session boundary in Godot.
+- Bearer token remains in memory and is not persisted with level or local-store data.
+- Optional ERROW_COMMUNITY_AUTH_TOKEN runtime injection for development/native execution.
+- Session token changes propagate to CommunityLevelProvider.
+- Authenticated Community gameplay exposes Like and Unlike actions.
+- Authenticated Community gameplay exposes bounded report-reason selection and Report action.
+- Anonymous Community gameplay remains available and still records completed plays.
+- Original and Player flows remain independent of Community authentication.
+- Engagement/report results surface through lightweight gameplay status text.
+- Godot smoke coverage validates anonymous/authenticated state, token propagation and Community action visibility.
+- README advanced to SPEC-009.
 
 ## Verified PR gates
 
-Exact PR HEAD 31823d572c2ec118a486d98ef7eb6c6936986538:
+Exact PR HEAD fe66202b311f7717475bd2dcad9112e680c6aea2:
 
-- Community service tests: success.
-- PostgreSQL 17 integration: success.
-- Production service container build: success.
+- Community service job: success.
+- PostgreSQL 17 integration gate: success.
+- Production community-service image build: success.
 - Godot 4.7.2 import/parse: success.
-- Headless smoke tests: success.
-- Web export/artifact: success.
-- PR remained mergeable and was merged as a61c7c94a63c77c4cdedbe7fd911efa1c11a9b0d.
+- Headless gameplay/auth smoke tests: success.
+- Web release export/artifact: success.
+- GitHub Pages deploy: skipped as expected for pull_request events.
+- PR remained mergeable and was merged as 306b54ecd6318b1003607eea1dbd4d7937d29faf.
 
 ## Invariants preserved
 
 - Original and Player levels remain local/offline-capable.
-- Community submissions remain constrained data, never executable Godot content.
+- Anonymous Community browsing/play does not require identity.
+- Community bearer tokens are runtime session data, not puzzle data.
 - Published revisions remain immutable.
-- Takedown hides levels from feeds and immutable-revision reads.
-- Curation affects only the curated feed.
-- Repeating like/report state cannot inflate aggregates/queue cardinality.
+- Existing SPEC-008 like/report idempotency and moderation semantics remain server-authoritative.
+- No identity vendor, paid hosting provider or production credentials were selected.
 - Human visual/device validation remains asynchronous and non-blocking.
 
 ## Active gate
 
-This handoff publication commit becomes the newest master HEAD and therefore requires its own exact-SHA master CI/deploy reconciliation.
+This handoff publication commit becomes the newest master HEAD and requires exact-SHA master CI plus GitHub Pages deployment reconciliation.
 
-Do not reuse PR #9 CI evidence as proof for the newer handoff-publication HEAD.
+Do not reuse PR #10 workflow evidence as proof for the newer master handoff-publication HEAD.
 
 ## Next action
 
-1. Resolve the live master HEAD after this handoff publication.
-2. Consume its exact GitHub Actions service, Godot/Web and Pages deployment jobs.
-3. If green and no new unfinished work appears, select the next milestone from repository evidence rather than chat memory.
+1. Resolve live master after this handoff publication.
+2. Consume the exact master Community service, Godot/Web and Pages deploy jobs.
+3. If green and no unfinished work appears, select the next milestone only from current repository evidence.
 
 ## Boundaries
 
 - REAL REPOSITORY STATE > REPOSITORY HANDOFFS / CANON / SPECS > CHAT OR MODEL MEMORY.
 - One repository-local SIGA state only.
-- No paid production infrastructure was selected or provisioned.
-- Login/signup UX and moderator administration UI remain future work.
+- Production OAuth/OIDC browser flow, signup/login UX and token refresh remain future work.
+- Moderator administration UI remains future work.
