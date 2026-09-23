@@ -22,6 +22,30 @@ env:
   SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
+  service:
+    name: Community service tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify checked out revision
+        run: |
+          test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+          echo "Validated source SHA: ${SOURCE_SHA}"
+
+      - name: Run community service tests
+        run: npm --prefix service test
+
   build:
     name: Validate and export Web
     runs-on: ubuntu-latest
@@ -88,7 +112,7 @@ jobs:
   deploy:
     name: Deploy Web to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: build
+    needs: [build, service]
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

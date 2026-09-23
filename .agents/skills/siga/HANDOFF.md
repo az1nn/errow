@@ -1,66 +1,69 @@
 CAVEMAN HANDOFF v1
 
 APP: Errow
-WORKSTREAM: SPEC-005 — Community provider contract
-STATE: MERGED; exact PR HEAD verified green; post-merge master/Pages run requires follow-up visibility
-MODE: WATCH
-CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-005-COMMUNITY-PROVIDER.md + docs/COMMUNITY-API.md
+WORKSTREAM: SPEC-006 — Community service core
+STATE: IMPLEMENTED on feature branch; local Node verification green; GitHub PR/CI pending
+MODE: RESUME
+CANONICAL SOURCE: .agents/skills/siga/SKILL.md + .agents/skills/siga/HANDOFF.md + docs/SPEC-006-COMMUNITY-SERVICE-CORE.md + docs/COMMUNITY-API.md
 
-CURRENT VERSION / HEAD: resolve live master HEAD during VERIFY-FIRST; SPEC-005 merge commit is 26f96fcd3b3aca877b99b3c071db54f630d37d65
-BASE: master
-BRANCH / ENV: master / GitHub Pages
-PR / MR / TASK: PR #6 — MERGED
-SPEC / ADR: SPEC-005-COMMUNITY-PROVIDER
+CURRENT VERSION / HEAD: feat/006-community-service-core; resolve live HEAD during VERIFY-FIRST
+BASE: master @ df84bf50ff66090e50dfce13f253746cd6e5e400
+BRANCH / ENV: feat/006-community-service-core / PR validation
+PR / MR / TASK: create PR to master and validate exact HEAD
+SPEC / ADR: SPEC-006-COMMUNITY-SERVICE-CORE
 
 DONE:
-- Added CommunityLevelProvider as the single client HTTPS boundary.
-- Added New/Popular/Trending/Curated feed contract plus immutable revision download and publish request methods.
-- Added optional bearer-token support without storing identity inside level schema.
-- Added strict remote-entry normalization; published metadata stays outside level dictionaries.
-- Remote entries are structurally validated and must be solvable before entering gameplay.
-- Added Community navigation to the main game; New is the first discovery feed.
-- Missing API configuration is non-fatal and leaves Original/My levels/Create available.
-- Added docs/COMMUNITY-API.md with server-side revalidation and immutable publication requirements.
-- Added smoke coverage for remote normalization, deadlock rejection and publish preflight.
-- PR #6 merged automatically under the repository-local authorization at exact HEAD 23e8d3e6d64398953be58c846a27106fcd9151d5.
-- Merge commit: 26f96fcd3b3aca877b99b3c071db54f630d37d65.
+- Reconciled SPEC-005 post-merge workflow and GitHub Pages deployment: run 35850518621 succeeded on master HEAD df84bf50ff66090e50dfce13f253746cd6e5e400.
+- Added provider-neutral Node.js 22 community service core.
+- Implemented authenticated publication through deployment-configured bearer-token mapping.
+- Ported 5x5 structural and deterministic solvability validation to the server.
+- Added sanitization so client-only id/source fields never enter published revision payloads.
+- Added canonical public IDs and immutable revision sequencing scoped by creator + client_level_id.
+- Added atomic JSON-file persistence with mutable stats/moderation state separated from revision payloads.
+- Added New/Popular/Trending/Curated read feeds and immutable revision reads.
+- Added Node tests for auth, validation, deadlock rejection, revision immutability, feeds and persistence.
+- Extended repository CI so service tests run against the exact source SHA alongside Godot validation.
+- Kept the existing Godot Pages deployment path; deploy now also depends on the service test job.
 
 VERIFY:
-- Exact PR HEAD Godot CI/CD run 35850278662: SUCCESS.
-- Exact PR HEAD checkout, Godot 4.7.2 import/parse, headless smoke tests, Web export and Web artifact upload: SUCCESS.
-- PR #6 was mergeable, non-draft, had no reviews, no unresolved review threads and no comments/blockers immediately before merge.
-- The current GitHub connector only enumerates pull-request-triggered runs for a commit; it does not expose the post-merge push/Pages run for master, so that deployment is NOT claimed as independently verified in this execution.
+- Local Node 22 test suite: 6 tests passed, 0 failed.
+- SPEC-005 post-merge master run 35850518621: Community predecessor Godot pipeline and Deploy Web to GitHub Pages were SUCCESS before this workstream started.
+- Exact feature HEAD GitHub Actions validation is still pending.
 
 GATES:
-- Exact PR HEAD technical gates: GREEN.
+- Blocking: exact feature HEAD GitHub Actions must pass both Community service tests and Godot validate/export.
 - No explicit human gate.
-- Follow-up gate: observe the master push workflow / GitHub Pages deployment when tooling exposes it.
+- Automatic merge authorization remains active under SKILL.md conditions.
 
 BLOCKERS:
 - No code blocker known.
-- Production community service is intentionally outside SPEC-005 and no API base URL is configured by default.
-- Post-merge master/Pages status is an observability gap, not a known failure.
+- This increment does not choose or provision a production hosting provider.
+- The JSON adapter is single-process durable storage; multiple replicas require a shared transactional database adapter.
+- Public identity issuance, plays/likes mutation, reports and moderation mutation endpoints remain follow-up work.
 
 INVARIANTS:
 - REAL STATE > HANDOFF > MEMORY > CHAT.
 - VERIFY-FIRST on every standalone Siga.
 - No parallel canonical SIGA state outside this repository.
 - Original, Player and Community remain explicit sources.
-- Community metadata does not mutate schema-v1 puzzle data.
+- Local drafts/offline play remain first-class.
+- Never trust client publication validation as authoritative.
 - Never load submitted executable Godot resources.
-- Server-side publication validation remains mandatory even after client preflight.
-- Do not claim post-merge deployment success without direct evidence.
+- Published revisions are immutable; mutable stats/moderation remain outside level payloads.
+- Do not claim deployment success without direct evidence.
 
 NEXT:
-- First, reconcile the master push workflow and GitHub Pages deployment associated with the latest master HEAD.
-- If that gate is green, classify ADVANCE.
-- Then start the hosted community service workstream: authenticated publication, server-side validation, immutable persistence/revisions, discovery/search, plays/likes and report/takedown state.
-- Preserve local drafts/offline play as first-class behavior.
+- Create the SPEC-006 PR.
+- Validate the exact PR HEAD through the expanded GitHub Actions workflow.
+- Fix any Node/Godot/Pages pipeline regression without weakening invariants.
+- If exact-head gates are green and the PR is mergeable, merge automatically with expected_head_sha.
+- Reconcile master and GitHub Pages after merge.
+- Then ADVANCE to production hosting/database + identity, followed by plays/likes and report/takedown mutation APIs.
 
 VERIFY-FIRST:
 1. Read this handoff and repository-local SIGA skill.
-2. Resolve live master HEAD and confirm PR #6 remains merged.
-3. Inspect any master push/Pages run newer than merge commit 26f96fcd3b3aca877b99b3c071db54f630d37d65.
-4. If a run is active, remain WATCH.
-5. If it failed, RESUME and fix the failure in the same workstream.
-6. If master/Pages is green, switch to ADVANCE and begin the hosted community service increment.
+2. Resolve live feat/006-community-service-core HEAD and PR state.
+3. Inspect exact-head GitHub Actions jobs for Community service tests and Godot validate/export.
+4. If CI is active, WATCH without duplicating work.
+5. If any job failed, RESUME at the failing gate and fix it.
+6. If all exact-head gates are green and the PR is mergeable/non-draft with no blocking review, merge under the standing authorization and reconcile master/Pages.
