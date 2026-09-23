@@ -15,6 +15,7 @@ var level_collection := "official"
 var local_level_store: LocalLevelStore
 var community_level_provider: CommunityLevelProvider
 var community_auth_session: CommunityAuthSession
+var current_community_feed := "new"
 
 var level_index := 0
 var moves := 0
@@ -31,6 +32,8 @@ var status_label: Label
 var player_publish_actions: HBoxContainer
 var player_publish_hint: Label
 var player_publish_button: Button
+var community_feed_actions: HBoxContainer
+var community_feed_buttons: Dictionary = {}
 var community_actions: HBoxContainer
 var community_auth_hint: Label
 var community_report_reason: OptionButton
@@ -214,6 +217,24 @@ func _build_ui() -> void:
 	_apply_action_style(create_level)
 	library_actions.add_child(create_level)
 
+	community_feed_actions = HBoxContainer.new()
+	community_feed_actions.name = "CommunityFeedActions"
+	community_feed_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	community_feed_actions.add_theme_constant_override("separation", 10)
+	community_feed_actions.visible = false
+	stack.add_child(community_feed_actions)
+
+	for feed_name in CommunityLevelProviderScript.ALLOWED_FEEDS:
+		var feed_button := Button.new()
+		feed_button.text = str(feed_name).capitalize()
+		feed_button.custom_minimum_size = Vector2(120, 48)
+		feed_button.focus_mode = Control.FOCUS_NONE
+		feed_button.add_theme_font_size_override("font_size", 16)
+		feed_button.pressed.connect(_show_community_feed.bind(str(feed_name)))
+		_apply_action_style(feed_button)
+		community_feed_actions.add_child(feed_button)
+		community_feed_buttons[str(feed_name)] = feed_button
+
 	player_publish_hint = Label.new()
 	player_publish_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	player_publish_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -353,6 +374,7 @@ func _set_level_collection(new_levels: Array, collection: String) -> void:
 
 	levels = new_levels.duplicate(true)
 	level_collection = collection
+	_set_community_feed_controls_visible(level_collection == "community")
 	_load_level(0)
 
 
@@ -376,9 +398,32 @@ func _show_player_levels() -> void:
 
 
 func _show_community_levels() -> void:
+	_show_community_feed("new")
+
+
+func _show_community_feed(feed: String) -> void:
+	var normalized_feed := feed.strip_edges().to_lower()
+	if not CommunityLevelProviderScript.ALLOWED_FEEDS.has(normalized_feed):
+		status_label.text = "Unsupported Community feed."
+		return
+
 	overlay.visible = false
-	status_label.text = "Loading Community · New..."
-	community_level_provider.fetch_feed("new")
+	current_community_feed = normalized_feed
+	_set_community_feed_controls_visible(true)
+	status_label.text = "Loading Community · %s..." % normalized_feed.capitalize()
+	community_level_provider.fetch_feed(normalized_feed)
+
+
+func _set_community_feed_controls_visible(visible: bool) -> void:
+	if community_feed_actions == null:
+		return
+
+	community_feed_actions.visible = visible
+	for feed_name_variant in community_feed_buttons:
+		var feed_name := str(feed_name_variant)
+		var feed_button := community_feed_buttons.get(feed_name) as Button
+		if feed_button != null:
+			feed_button.disabled = visible and feed_name == current_community_feed
 
 
 func _on_community_feed_loaded(entries: Array) -> void:
@@ -400,6 +445,7 @@ func _on_community_feed_loaded(entries: Array) -> void:
 		return
 
 	_set_level_collection(community_levels, "community")
+	status_label.text = "Community · %s feed loaded." % current_community_feed.capitalize()
 
 
 func _on_community_request_failed(message: String) -> void:
@@ -580,7 +626,7 @@ func _load_level(index: int) -> void:
 		"player":
 			collection_label = "Player"
 		"community":
-			collection_label = "Community"
+			collection_label = "Community · %s" % current_community_feed.capitalize()
 
 	level_label.text = "%s %d · %s" % [
 		collection_label,
@@ -719,7 +765,7 @@ func _show_complete() -> void:
 			overlay_button.text = "Replay level"
 		elif level_index == levels.size() - 1:
 			overlay_title.text = "Community set cleared"
-			overlay_copy.text = "You cleared every level in this Community feed."
+			overlay_copy.text = "You cleared every level in the %s feed." % current_community_feed.capitalize()
 			overlay_button.text = "Replay Community"
 		else:
 			overlay_title.text = "Community level cleared"
