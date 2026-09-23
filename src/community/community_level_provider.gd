@@ -73,6 +73,10 @@ func download_level(public_id: String, revision: int) -> bool:
 
 
 func publish_level(level: Dictionary) -> bool:
+	if auth_token.is_empty():
+		_emit_failure("Authentication is required to publish Community levels.")
+		return false
+
 	var document := build_publish_document(level)
 	if not bool(document.get("ok", false)):
 		_emit_failure(str(document.get("error", "Level cannot be published.")))
@@ -236,6 +240,13 @@ func _emit_failure(message: String) -> void:
 
 
 static func build_publish_document(level: Dictionary) -> Dictionary:
+	var source := str(level.get("source", "player")).strip_edges().to_lower()
+	if source != "player":
+		return {
+			"ok": false,
+			"error": "Only Player levels can be published.",
+		}
+
 	var normalized := _normalize_publish_level(level)
 	var validation_error := LevelRulesScript.validate_level(normalized)
 	if not validation_error.is_empty():
@@ -249,11 +260,18 @@ static func build_publish_document(level: Dictionary) -> Dictionary:
 			"error": "Only solvable levels can be published.",
 		}
 
+	var client_level_id := str(normalized.get("id", "")).strip_edges()
+	if client_level_id.is_empty():
+		return {
+			"ok": false,
+			"error": "Save the Player level locally before publishing.",
+		}
+
 	return {
 		"ok": true,
 		"body": {
 			"schema_version": API_VERSION,
-			"client_level_id": str(level.get("id", "")),
+			"client_level_id": client_level_id,
 			"level": normalized,
 		},
 	}
