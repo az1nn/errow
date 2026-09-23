@@ -41,7 +41,7 @@ func _run() -> void:
 	_check(LevelRulesScript.is_solvable(game.get("levels")[0]), "official level 1 must be solvable")
 	_check(game.get_node_or_null("LevelCreator") != null, "main scene must include the player level creator")
 	_check(game.get_node_or_null("CommunityLevelProvider") != null, "main scene must include the community provider boundary")
-	_check(game.get_node_or_null("CommunityActions") != null, "main scene must expose the authenticated Community action surface")
+	_check(game.get("community_actions") != null, "main scene must expose the authenticated Community action surface")
 	_check(game.get("community_actions").visible == false, "Community actions must stay hidden for Original levels")
 
 	var auth_session := CommunityAuthSessionScript.new()
@@ -188,7 +188,7 @@ func _run() -> void:
 	_check(int(active_community_level.get("_community_revision", 0)) == 2, "community runtime level must retain its immutable revision")
 	var runtime_auth_session = game.get("community_auth_session")
 	runtime_auth_session.set_auth_token("smoke-token")
-	game.get("community_level_provider").set_auth_token(runtime_auth_session.bearer_token())
+	_check(game.get("community_level_provider").auth_token == "smoke-token", "runtime auth changes must propagate to the Community provider")
 	game.call("_refresh_community_actions")
 	_check(game.get("community_actions").visible, "authenticated Community play must expose engagement controls")
 	game.call("_show_official_levels")
