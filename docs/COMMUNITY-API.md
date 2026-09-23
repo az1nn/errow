@@ -122,6 +122,84 @@ Before publication it repeats the structural and solvability invariants, assigns
 
 Response uses the same `entry` envelope as the download endpoint.
 
+## POST /v1/levels/{public_id}/plays
+
+Records one completed play for an existing visible Community level.
+
+Authentication is not required in v1 so browser play can be counted before identity UX exists.
+
+Response:
+
+```json
+{
+  "stats": {
+    "plays": 121,
+    "likes": 44
+  }
+}
+```
+
+This mutates only Community stats, never an immutable level revision.
+
+## PUT /v1/levels/{public_id}/like
+
+Requires bearer authentication.
+
+Request:
+
+```json
+{
+  "liked": true
+}
+```
+
+The operation is idempotent per authenticated subject and public level. Repeating the same state does not inflate the aggregate count.
+
+Response:
+
+```json
+{
+  "stats": {
+    "plays": 121,
+    "likes": 45,
+    "liked": true
+  }
+}
+```
+
+## POST /v1/levels/{public_id}/reports
+
+Requires bearer authentication.
+
+Request:
+
+```json
+{
+  "reason": "spam"
+}
+```
+
+Allowed reasons: `spam`, `abusive`, `misleading`, `broken`, `other`.
+
+One report exists per authenticated subject and public level. A repeated report updates that subject's reason and timestamp rather than increasing the moderation queue.
+
+Successful submission returns HTTP 202.
+
+## PATCH /v1/moderation/levels/{public_id}
+
+Requires bearer authentication and a subject present in the service `ERROW_MODERATOR_IDS` configuration.
+
+Request may contain either or both:
+
+```json
+{
+  "curated": true,
+  "takedown": false
+}
+```
+
+Takedown hides the level from feed and immutable-revision read paths. Curation controls membership in the curated feed. Neither operation rewrites published puzzle snapshots.
+
 ## Error shape
 
 Recommended error response:
