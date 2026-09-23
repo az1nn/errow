@@ -169,6 +169,14 @@ func _run() -> void:
 	_check(game.get("active_arrows").size() == 8, "level 3 must start with 8 arrows")
 	_check(game.call("_can_exit", Vector2i(2, 2), "L") == false, "cross-traffic inner arrow must start blocked")
 
+	game.call("_on_community_feed_loaded", community_entries)
+	_check(str(game.get("level_collection")) == "community", "community entries must switch the runtime collection")
+	var active_community_level: Dictionary = game.get("levels")[0]
+	_check(str(active_community_level.get("_community_public_id", "")) == "ERROW-SMOKE", "community runtime level must retain its public ID for engagement")
+	_check(int(active_community_level.get("_community_revision", 0)) == 2, "community runtime level must retain its immutable revision")
+	game.call("_show_official_levels")
+	_check(str(game.get("level_collection")) == "official", "official levels must remain available after community browsing")
+
 	game.queue_free()
 	await process_frame
 	_finish()
