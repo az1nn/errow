@@ -43,6 +43,8 @@ func _run() -> void:
 	_check(game.get_node_or_null("CommunityLevelProvider") != null, "main scene must include the community provider boundary")
 	_check(game.get("community_actions") != null, "main scene must expose the authenticated Community action surface")
 	_check(game.get("community_actions").visible == false, "Community actions must stay hidden for Original levels")
+	_check(game.get("player_publish_actions") != null, "main scene must expose the Player publication surface")
+	_check(game.get("player_publish_actions").visible == false, "Player publication must stay hidden for Original levels")
 
 	var auth_session := CommunityAuthSessionScript.new()
 	_check(auth_session.is_authenticated() == false, "community auth session must start anonymous")
@@ -116,7 +118,25 @@ func _run() -> void:
 			[2, 2, "U"],
 		],
 	})
-	_check(bool(valid_publish.get("ok", false)), "solvable player level must produce a publish document")
+	_check(bool(valid_publish.get("ok", false)), "solvable saved Player level must produce a publish document")
+	_check(str(valid_publish.get("body", {}).get("client_level_id", "")) == "local-smoke", "publication must preserve the stable local ID as client_level_id")
+	var unsaved_publish: Dictionary = CommunityLevelProviderScript.build_publish_document({
+		"schema_version": 1,
+		"source": "player",
+		"name": "Unsaved publish",
+		"board_size": 5,
+		"arrows": [[2, 0, "U"]],
+	})
+	_check(bool(unsaved_publish.get("ok", false)) == false, "unsaved Player levels must be rejected before publication")
+	var official_publish: Dictionary = CommunityLevelProviderScript.build_publish_document({
+		"schema_version": 1,
+		"id": "official-smoke",
+		"source": "official",
+		"name": "Official publish",
+		"board_size": 5,
+		"arrows": [[2, 0, "U"]],
+	})
+	_check(bool(official_publish.get("ok", false)) == false, "non-Player provenance must be rejected before publication")
 	var deadlocked_publish: Dictionary = CommunityLevelProviderScript.build_publish_document(deadlocked_level)
 	_check(bool(deadlocked_publish.get("ok", false)) == false, "deadlocked level must be rejected before publication")
 
@@ -180,13 +200,28 @@ func _run() -> void:
 	_check(game.get("active_arrows").size() == 8, "level 3 must start with 8 arrows")
 	_check(game.call("_can_exit", Vector2i(2, 2), "L") == false, "cross-traffic inner arrow must start blocked")
 
+	var runtime_auth_session = game.get("community_auth_session")
+	var runtime_provider = game.get("community_level_provider")
+	runtime_auth_session.clear()
+	runtime_provider.configure("")
+	game.call("_set_level_collection", [valid_publish["body"]["level"]], "player")
+	_check(game.get("player_publish_actions").visible == false, "Player publication must stay unavailable without a configured service")
+	_check(game.get("player_publish_hint").visible, "Player publication must explain unavailable service state")
+	runtime_provider.configure("https://community.example")
+	game.call("_refresh_player_publish_actions")
+	_check(game.get("player_publish_actions").visible == false, "anonymous Player sessions must not expose publication")
+	runtime_auth_session.set_auth_token("smoke-token")
+	_check(runtime_provider.auth_token == "smoke-token", "runtime auth changes must propagate to the Community provider")
+	_check(game.get("player_publish_actions").visible, "configured authenticated Player sessions must expose publication")
+	_check(game.get("player_publish_hint").visible == false, "publication hint must hide when publishing is available")
+
+	runtime_auth_session.clear()
 	game.call("_on_community_feed_loaded", community_entries)
 	_check(str(game.get("level_collection")) == "community", "community entries must switch the runtime collection")
 	_check(game.get("community_actions").visible == false, "anonymous Community play must keep authenticated actions hidden")
 	var active_community_level: Dictionary = game.get("levels")[0]
 	_check(str(active_community_level.get("_community_public_id", "")) == "ERROW-SMOKE", "community runtime level must retain its public ID for engagement")
 	_check(int(active_community_level.get("_community_revision", 0)) == 2, "community runtime level must retain its immutable revision")
-	var runtime_auth_session = game.get("community_auth_session")
 	runtime_auth_session.set_auth_token("smoke-token")
 	_check(game.get("community_level_provider").auth_token == "smoke-token", "runtime auth changes must propagate to the Community provider")
 	game.call("_refresh_community_actions")
