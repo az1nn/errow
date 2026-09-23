@@ -4,12 +4,15 @@ extends Node
 signal feed_loaded(entries)
 signal level_loaded(entry)
 signal published(entry)
+signal engagement_updated(operation, public_id, stats)
+signal report_submitted(public_id)
 signal request_failed(message)
 
 const LevelRulesScript = preload("res://src/levels/level_rules.gd")
 
 const API_VERSION := 1
 const ALLOWED_FEEDS := ["new", "popular", "trending", "curated"]
+const ALLOWED_REPORT_REASONS := ["spam", "abusive", "misleading", "broken", "other"]
 const MAX_NAME_LENGTH := 48
 const MAX_SUBTITLE_LENGTH := 96
 
@@ -80,6 +83,57 @@ func publish_level(level: Dictionary) -> bool:
 		"/v1/levels",
 		HTTPClient.METHOD_POST,
 		JSON.stringify(document["body"])
+	)
+
+
+func record_play(public_id: String) -> bool:
+	var normalized_id := public_id.strip_edges()
+	if normalized_id.is_empty():
+		_emit_failure("A public level ID is required.")
+		return false
+
+	return _request(
+		"play:%s" % normalized_id,
+		"/v1/levels/%s/plays" % normalized_id.uri_encode(),
+		HTTPClient.METHOD_POST
+	)
+
+
+func set_like(public_id: String, liked: bool) -> bool:
+	var normalized_id := public_id.strip_edges()
+	if normalized_id.is_empty():
+		_emit_failure("A public level ID is required.")
+		return false
+	if auth_token.is_empty():
+		_emit_failure("Authentication is required to like Community levels.")
+		return false
+
+	return _request(
+		"like:%s" % normalized_id,
+		"/v1/levels/%s/like" % normalized_id.uri_encode(),
+		HTTPClient.METHOD_PUT,
+		JSON.stringify({"liked": liked})
+	)
+
+
+func report_level(public_id: String, reason: String) -> bool:
+	var normalized_id := public_id.strip_edges()
+	var normalized_reason := reason.strip_edges().to_lower()
+	if normalized_id.is_empty():
+		_emit_failure("A public level ID is required.")
+		return false
+	if not ALLOWED_REPORT_REASONS.has(normalized_reason):
+		_emit_failure("Unsupported Community report reason.")
+		return false
+	if auth_token.is_empty():
+		_emit_failure("Authentication is required to report Community levels.")
+		return false
+
+	return _request(
+		"report:%s" % normalized_id,
+		"/v1/levels/%s/reports" % normalized_id.uri_encode(),
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"reason": normalized_reason})
 	)
 
 
@@ -154,6 +208,24 @@ func _on_request_completed(
 			_emit_failure(str(publish_result.get("error", "Invalid publication response.")))
 			return
 		published.emit(publish_result["entry"])
+		return
+
+	if operation.begins_with("play:") or operation.begins_with("like:"):
+		if typeof(payload) != TYPE_DICTIONARY:
+			_emit_failure("Community engagement response must be a JSON object.")
+			return
+		var engagement_payload: Dictionary = payload
+		var raw_stats = engagement_payload.get("stats", {})
+		if typeof(raw_stats) != TYPE_DICTIONARY:
+			_emit_failure("Community engagement response is missing stats.")
+			return
+		var operation_parts := operation.split(":", false, 1)
+		engagement_updated.emit(operation_parts[0], operation_parts[1], raw_stats)
+		return
+
+	if operation.begins_with("report:"):
+		var report_parts := operation.split(":", false, 1)
+		report_submitted.emit(report_parts[1])
 		return
 
 	_emit_failure("Community response did not match an active operation.")
