@@ -3,3 +3,4 @@ build/
 export/
 *.tmp
 .DS_Store
+service/.data/

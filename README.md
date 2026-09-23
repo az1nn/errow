@@ -10,7 +10,7 @@ Arrows are rendered by a reusable vector ArrowVisual component. Successful moves
 
 ## Levels
 
-Errow now has three explicit level sources:
+Errow has three explicit level sources:
 
 - **Original** — curated levels bundled with the game.
 - **Player** — levels created in-game and stored locally.
@@ -39,22 +39,39 @@ Main scene: `res://src/main.tscn`
 
 ### Community service
 
-Set the optional Godot project setting `errow/community_api_base_url` to an HTTPS origin implementing `docs/COMMUNITY-API.md`.
+The repository now contains the provider-neutral Node.js service core under `service/`.
+
+Run its tests with:
+
+```bash
+npm --prefix service test
+```
+
+Run the service with a configured publisher token:
+
+```bash
+export ERROW_AUTH_TOKENS='{"local-token":"user-local"}'
+npm --prefix service start
+```
+
+Then set the optional Godot project setting `errow/community_api_base_url` to the service HTTPS origin.
 
 If the setting is absent or empty, Community networking is disabled cleanly while Original, My levels and Create continue to work.
+
+See `service/README.md` and `docs/COMMUNITY-API.md`.
 
 ## Project state
 
 - Platform target: mobile + web.
 - Rendering: Godot compatibility renderer.
-- Current spec: `docs/SPEC-005-COMMUNITY-PROVIDER.md`.
+- Current spec: `docs/SPEC-006-COMMUNITY-SERVICE-CORE.md`.
 - Community API contract: `docs/COMMUNITY-API.md`.
 - UGC research: `docs/UGC-RESEARCH.md`.
 - Continuation protocol: `.agents/skills/siga/`.
 
 ## CI/CD
 
-Pull requests to `master` are validated with Godot 4.7.2 stable on GitHub Actions, including headless scene smoke tests and a real Web export. Pushes to `master` also feed the validated Web artifact to GitHub Pages.
+Pull requests to `master` validate the Node community service and Godot 4.7.2 project against the exact PR HEAD. Godot validation includes headless scene smoke tests and a real Web export. Pushes to `master` additionally publish the validated Web artifact to GitHub Pages.
 
 See `docs/CI-CD.md` for the pipeline contract.
 
